@@ -13,7 +13,7 @@
   (let [up (long (Math/pow 10 c))
         rg (range (/ up 10) up)]
     (for [x rg y rg
-          :when (<= y x)]
+          :while (<= y x)]
       (* x y))))
 
 (map
