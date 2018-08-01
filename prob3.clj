@@ -1,18 +1,13 @@
-(ns prob3)
+(ns prob3
+  (:require [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
 
-(def N 13195)
-
-(defn not-divider-of [x]
-  (comp (partial not= 0) (partial mod x)))
-
-(defn prime?
-  "x:value to test; rg:array of primes to test against"
-  [x rg]
-  (every? (not-divider-of x) rg)) ;TODO: optimize to check only up to (Math/sqrt)
+(defn prime? [n rg]
+  (let [b (Math/sqrt n)]
+    (not-any? #(= 0 (mod n %)) (take-while (partial < b) rg))))
 
 (defn conj-prime [r x]
-  (if (prime? x r)
-    (conj r x)
+  (if (p :conj-prime-if (prime? x r))
+    (p :conj-prime-conj (conj r x))
     r))
 
 (defn list-primes [N]
@@ -27,11 +22,18 @@
   (let [[n _ _] (last r)]
     (if (<= n 1)
       (reduced r)
-      (conj r (prime-pow n 0 e)))))
+      (conj r (p :conj-prime-pow (prime-pow n 0 e))))))
 
-(filter
- #(not= 0 (second %))
- (reduce
-  conj-prime-pow
-  [(prime-pow N 0 2)]
-  (rest (list-primes N))))
+(defn list-prime-factors [N]
+  (filter
+   #(not= 0 (second %))
+   (reduce
+    conj-prime-pow
+    [(prime-pow N 0 2)]
+    (rest (list-primes (Math/sqrt N))))))
+
+(def N1 13195)
+(def N2 (long 600851475143))
+
+(tufte/add-basic-println-handler! {})
+(profile {} (map list-prime-factors [N1, N2]))
