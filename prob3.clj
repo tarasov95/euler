@@ -21,7 +21,7 @@
 (defn prime-pow "Number poWer Prime" [n w p]
   (if (or (<= n 1) (not= 0 (mod n p)))
     [n w p]
-    (prime-pow (/ n p) (inc w) p)))
+    (recur (/ n p) (inc w) p)))
 
 (defn conj-prime-pow "Result Element" [r e]
   (let [[n _ _] (last r)]
@@ -29,7 +29,9 @@
       (reduced r)
       (conj r (prime-pow n 0 e)))))
 
-(reduce
- conj-prime-pow
- [(prime-pow N 0 2)]
- (filter #(> % 2) (list-primes N)))
+(filter
+ #(not= 0 (second %))
+ (reduce
+  conj-prime-pow
+  [(prime-pow N 0 2)]
+  (rest (list-primes N))))
