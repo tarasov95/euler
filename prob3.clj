@@ -30,7 +30,7 @@
    (reduce
     conj-prime-pow
     [(prime-pow N 0 2)]
-    (rest (list-primes (Math/sqrt N))))))
+    (rest (list-primes N)))))
 
 (def N1 13195)
 (def N2 (long 600851475143))
