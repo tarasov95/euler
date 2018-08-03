@@ -52,10 +52,13 @@
      [(prime-pow N 0 2)]
      (rest rg)))))
 
+(def list-of-dividers (cons 2 (rest (filter odd? (range)))))
+
 (def N1 13195)
 (def N2 (long 600851475143))
 
-;; (list-prime-factors N2)
+;; (list-prime-factors  list-of-dividers N2)
+
 
 (tufte/add-basic-println-handler! {})
-(profile {} (map (partial list-prime-factors (prime-seq)) [N1, N2]))
+(profile {} (map (partial list-prime-factors list-of-dividers) [N1, N2]))
