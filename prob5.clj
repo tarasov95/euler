@@ -7,8 +7,8 @@
 (defn pf [n]
   (map last (p3/list-prime-factors n)))
 
-{"primes of N1" (pf N1)
- "primes of the range" (into #{} (mapcat pf (range 2 11)))}
+;; {"primes of N1" (pf N1)
+;;  "primes of the range" (into #{} (mapcat pf (range 2 11)))}
 
 ;; {"primes of N2" (pf N2)
 ;;  "primes of the range" (into #{} (mapcat pf (range 2 21)))}
