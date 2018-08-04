@@ -5,24 +5,37 @@
 (def N2 232792560)
 
 (defn pf [n]
-  (map last (p3/list-prime-factors n)))
+  (map (comp reverse (partial into []) rest) (p3/list-prime-factors n)))
 
-;; {"primes of N1" (pf N1)
-;;  "primes of the range" (into #{} (mapcat pf (range 2 11)))}
+(defn max-ppow "fUNCTION rESULT eLEMENT" [f r e]
+  (let [[p w] e]
+    (assoc r p (f w (or (get r p) 0)))))
 
-;; {"primes of N2" (pf N2)
-;;  "primes of the range" (into #{} (mapcat pf (range 2 21)))}
+(defn map-pow [mf]
+  (map #(let [[p w] %] (long (Math/pow p w))) mf))
 
-;; (p3/list-prime-factors 19)
-;; (mod N2 19)
-;; 1) start with product of all primes
-;; 2) get mod of the numbers of the test range
-;; 3) for non-zero mod output add primes of the corresponding test number ot the product
-;; 4) repeat from p.2
-(let [rg (range 2 21)
-      n (reduce * (into #{} (mapcat pf rg)))
-      t (* 3 8 n)
-      rgMod (map (partial mod t) rg)]
-  {:t t
-   :mod rgMod
-   :rge (map vector rgMod rg)})
+(defn prob5 "sTART eND" [s e]
+  (let [rg (range (inc s) (inc e))
+        rf (mapcat pf rg)
+        mf (reduce (partial max-ppow max) {} rf)]
+    (reduce * (map-pow mf))))
+
+{:test (prob5 1 10)
+ :prob (prob5 1 20)}
+
+;; (let [rg (range 2 21)
+;;       rf (mapcat pf rg)
+;;       mf (reduce (partial max-ppow max) {} rf)]
+;;   {:mf mf
+;;    :mp (reduce * (map-pow mf))
+;;    :sf (reduce (partial max-ppow +) {} rf)
+;;    :rf rf})
+
+;; (map {} (1 2) (:a :b))
+;; (let [rg (range 2 21)
+;;       n (reduce * (into #{} (mapcat pf rg)))
+;;       t (* 3 8 n)
+;;       rgMod (map (partial mod t) rg)]
+;;   {:t t
+;;    :mod rgMod
+;;    :rge (map vector rgMod rg)})
