@@ -1,27 +1,26 @@
 (ns prob3
   (:require [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
 
-(defn prime? [n rg]
-  (not-any? #(= 0 (mod n %)) rg))
-
 ;; (defn prime? [n rg]
-;;      (let [b (Math/sqrt n)]
-;;             (not-any? #(= 0 (mod n %)) (take-while (partial < b) rg))))
+;;   (not-any? #(= 0 (mod n %)) rg))
 
-(defn find-next-prime [rg]
-  (loop [p (+ 2 (last rg))]
-    (if (prime? p rg)
+(defn prime? [n rg]
+  (let [b (p :sqrt-in-prime? (Math/sqrt n))]
+    (p :not-any-in-prime? (not-any? #(p :mod-test-in-prime? (zero? (mod n %))) (p :take-while-in-prime? (take-while (partial < b) rg))))))
+
+(defn find-next-prime [l rg]
+  (loop [p (+ 2 l)]
+    (if (tufte/p :prime?-in-find (prime? p rg))
       p
       (recur (+ 2 p)))))
 
 (defn prime-seq
-  ([] (let [s [2 3 5 7 11 13 17 19]]
-        (concat s (prime-seq s))))
-  ([rg]
+  ([] (prime-seq nil 2 1))
+  ([rg l ix]
    (lazy-seq
-    (let [n (find-next-prime rg)]
-      (println "realized " n)
-      (cons n (prime-seq (cons n rg)))))))
+    (let [n (p :find-next-prime-in-lazy-seq (find-next-prime l rg))]
+      ;; (println "realized #" ix "=" n)
+      (p :cons1 (cons n (prime-seq (p :cons2 (cons n rg)) n (inc ix))))))))
 
 ;; (defn conj-prime [r x]
 ;;   (if (p :conj-prime-if (prime? x r))
