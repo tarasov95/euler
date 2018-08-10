@@ -29,10 +29,10 @@
 
 (defn prob8 [l]
   (let [rg (map-indexed #(vector %1 (c2n %2)) s)
-       v (init-val rg l)
-       res (reduce max-p {:max v :cur v} (drop l rg))]
-   {:res (:max res)
-    :prod (prod (:max res))}))
+        v (init-val rg l)
+        res (reduce max-p {:max v :cur v} (drop l rg))]
+    {:res (:max res)
+     :prod (prod (:max res))}))
 
 {:l4 (prob8 4)
  :l13 (prob8 13)}
