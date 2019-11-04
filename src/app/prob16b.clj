@@ -15,12 +15,12 @@
    (let [f (first b)
          r (rest b)]
      (if (empty? r)
-      (+ n f)
-      (recur r (* 2 (+ n f)))))))
+       (+ n f)
+       (recur r (* 2 (+ n f)))))))
 
 (defn p2 [n]
   (for [x (range (inc n))]
-   (if (= 0 x) 1 0)))
+    (if (= 0 x) 1 0)))
 
 (def b10 (list 1 0 1 0))
 
@@ -46,16 +46,16 @@
          :c (max (quot s0 2) (quot s1 2))}))))
 
 (defn bnorm [m]
-  (conj (:n m) (:c m)))
+  (let [c (:c m)]
+    (if (= c 0)
+      (:n m)
+      (conj (:n m) c))))
 
 (defn comp1 [n]
   (map (fn [e] (if (= e 0) 1 0)) n))
 
-(defn bsub1 [n1 n2]
-  )
-
 (defn to-bin
-  "lsb -> msb"
+  "lsb ... msb"
   ([n] (to-bin n []))
   ([n r]
    (if (< n 2)
@@ -63,7 +63,7 @@
      (recur (quot n 2) (conj r (mod n 2))))))
 
 (defn from-bin
-  "lsb -> msb"
+  "lsb ... msb"
   ([r] (from-bin r 0 1))
   ([r n m]
    (let [f (first r)]
@@ -74,7 +74,7 @@
               (* 2 m))))))
 
 (defn add2
-  "lsb -> msb"
+  "lsb ... msb"
   ([b1 b2] (add2 b1 b2 [] 0))
   ([b1 b2 r c]
    (let [f1 (first b1)
@@ -89,9 +89,36 @@
                       (rest b2)
                       (conj r (mod d1 2))
                       (max c1 c0)))))))
+(defn comp2 [b1]
+  (bnorm (add2 (comp1 b1) [1])))
 
-(let [b7 '(0 1 1 1)]
-  {:add1 (add2 [0 0 1] [1 1 1] [] 0)
-   :add2 (add2 [1] [1 1 1] [] 0)
-   :test1 (to-bin 8)
-   :test2 (from-bin [1 0 1])})
+(defn sub2 [b1 b2]
+  "lsb ... msb"
+  (add2 b1 (comp2 b2)))
+
+(defn from-bin-sign
+  "lsb ... msb"
+  ([r] (from-bin-sign r 0 1))
+  ([r n m]
+   (let [f (first r)
+         t (rest r)]
+     (println f t (empty? t) m)
+     (if (empty? t)
+       (- n (* m f))
+       (recur t
+              (+ n (* m f))
+              (* 2 m))))))
+
+(let [b10 [0 1 0 1]]
+  {"10" (from-bin b10)
+   :b10 b10
+   ;; :add1 (add2 [0 0 1] [1 1 1] [] 0)
+   ;; :add2 (add2 [1 1 1] [1 1 1] [] 0)
+   ;; :comp1 (comp1 b10)
+   :comp2 (comp2 (conj b10 0))
+   :sign (from-bin-sign [0 1 0 1])
+   :comp2dec (from-bin-sign (comp2 (conj b10 0)))
+   :subneg (sub2 b10 [1 1 1 1])
+   :sub1 (sub2 [1 1 1 1] b10)
+   :subto0 (sub2 b10 b10)
+   :addto0 (add2 b10 (comp2 b10))})
