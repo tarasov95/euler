@@ -9,6 +9,15 @@
 
 (def prime-factors (comp map-of-factors raw-factors))
 
-
 (defn mult-factors [mp1 mp2]
   (merge-with + mp1 mp2))
+
+(defn unwrap-factors [m]
+  (mapcat #(let [b (first %)
+                 p (second %)]
+             (map (fn [_] b) (range p))) m))
+
+(defn full-join [f r1 r2]
+  (letfn [(join [e]
+            (map #(f e %) r2))]
+    (map join r1)))
