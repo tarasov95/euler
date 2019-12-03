@@ -21,3 +21,10 @@
   (letfn [(join [e]
             (map #(f e %) r2))]
     (map join r1)))
+
+(defn defdbg [name f]
+  (fn [& args]
+    (println name args "...")
+    (let [z (apply f args)]
+      (println name args "=>" z)
+      z)))
