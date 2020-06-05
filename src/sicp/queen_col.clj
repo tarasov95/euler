@@ -6,7 +6,7 @@
 ;;     (recur (inc ix))))
 
 (defn render-row [p N]
-  (map #(if (= % p) 1 0) (range N)))
+  (map #(if (= % p) "Q" "*") (range N)))
 
 (defn render-board [r N]
   (loop [ix 0
@@ -40,12 +40,42 @@
            (p 4 (= (- q0 (- y qy)) x)) false
            :else (recur (rest q) (inc qy) x y))))))
 
-;; (print-board [0 2 7] 8)
-(let [q [0 2 7]]
-  ;; (print-board (conj q 5))
-  (println (map (fn [e] {:x e :z (is-pos-ok q e)}) (range 8))))
+(defn find-next-pos
+  ([q] (find-next-pos q 0 8))
+  ([q N] (find-next-pos q 0 N))
+  ([q ix N]
+   (when (< ix N)
+     (if (is-pos-ok q ix)
+       ix
+       (find-next-pos q (inc ix) N)))))
 
-;; p => 3 row#4
-;; 0,0 => !0 && !3
-;; 1,2 => !2 && !4 && !0 (+ 2 (- 3 1))
-;; 2,7 => !7 && !6
+(defn cut-tail [r]
+  (into [] (butlast r)))
+
+(defn swap-tail [r t]
+  (conj (cut-tail r) t))
+
+(defn backtrack [fun q N]
+  (if (empty? q)
+    nil
+    (let [p (find-next-pos (cut-tail q) (inc (last q)) N)]
+      (if (and p (< p N))
+        (fun (swap-tail q p) N)
+        (backtrack fun (cut-tail q) N)))))
+
+(defn find-game [q N]
+  (if (= N (count q))
+    q
+    (let [p (find-next-pos q N)]
+      (if (nil? p)
+        (backtrack find-game q N)
+        (find-game (conj q p) N)))))
+
+(let [g (find-game [] 8)]
+  (print-board g))
+;; (let [q [0 2 7 1 3]]
+;;   ;; (print-board (conj q 5))
+;;   (print-board q)
+;;   ;; (println (map (fn [e] {:x e :z (is-pos-ok q e)}) (range 8)))
+;;   (find-next-pos q))
+
