@@ -71,11 +71,18 @@
         (backtrack find-game q N)
         (find-game (conj q p) N)))))
 
-(let [g (find-game [] 8)]
-  (print-board g))
-;; (let [q [0 2 7 1 3]]
-;;   ;; (print-board (conj q 5))
-;;   (print-board q)
-;;   ;; (println (map (fn [e] {:x e :z (is-pos-ok q e)}) (range 8)))
-;;   (find-next-pos q))
+
+(defn find-all-games
+  ([N] (let [g (find-game [] N)]
+         (find-all-games (list g) g N)))
+  ([z q N]
+   (let [g (backtrack find-game q N)]
+     (if (nil? g)
+       z
+       (find-all-games (conj z g) g N)))))
+
+(let [z (find-all-games 8)]
+  (doseq [g z]
+    (print-board g))
+  (println "count " (count z)))
 
