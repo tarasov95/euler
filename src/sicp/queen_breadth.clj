@@ -37,12 +37,15 @@
   (when (is-pos-ok q ix)
     (fun (conj q ix) N)))
 
-(defn find-all-games [q N]
+(defn find-all-games [z q N]
+  "re_z_ult q_ueens N_umber-of-rows"
   (if (= (count q) N)
-    (println q)
-    (dotimes [ix N]
-      (find-game find-all-games q ix N))))
+    (cons q z)
+    (loop [y (list)
+           ix 0]
+      (if (< ix N)
+        (recur (concat y (find-game (partial find-all-games (list)) q ix N))
+               (inc ix))
+        y))))
 
-;; (find-all-games [] 8)
-;; (let [q (range 8)]
-;;   (print-board (find-game [4] 8)))
+(count (find-all-games (list) [] 8))
