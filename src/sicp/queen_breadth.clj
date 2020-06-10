@@ -33,9 +33,11 @@
        ix
        (find-next-pos q (inc ix) N)))))
 
-(defn find-games-at-pos [ix fun-find-all z q N]
+(declare find-all-games)
+
+(defn find-games-at-pos [ix z q N]
   (if (is-pos-ok q ix)
-    (fun-find-all 0 z (conj q ix) N)
+    (find-all-games 0 z (conj q ix) N)
     z))
 
 (defn find-all-games
@@ -45,7 +47,7 @@
    (if (= N (count q))
      (cons q z)
      (if (< ix N)
-       (let [z1 (find-games-at-pos ix find-all-games z q N)]
+       (let [z1 (find-games-at-pos ix z q N)]
          (recur (inc ix) z1 q N))
        z))))
 
