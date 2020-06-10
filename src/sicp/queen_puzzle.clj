@@ -1,4 +1,4 @@
-(ns sicp.queen-breadth)
+(ns sicp.queen-puzzle)
 
 (defn render-row [p N]
   (map #(if (= % p) "Q" "*") (range N)))
@@ -51,4 +51,4 @@
          (recur (inc ix) z1 q N))
        z))))
 
-(count (find-all-games [] 8))
+;; (count (find-all-games [] 8))
