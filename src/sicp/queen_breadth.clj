@@ -33,20 +33,20 @@
        ix
        (find-next-pos q (inc ix) N)))))
 
-(defn find-game [z fun q ix N]
-  (when (is-pos-ok q ix)
-    (fun (conj q ix) N)))
-
+(defn find-games-at-pos [ix fun-find-all z q N]
+  (if (is-pos-ok q ix)
+    (fun-find-all 0 z (conj q ix) N)
+    z))
 
 (defn find-all-games
   ([q N] (find-all-games 0 '() q N))
   ([ix z q N]
    "_ix_-of-the-column-to-check re_z_ult _q_ueens _N_umber-of-rows"
-   (if (= (count q) N)
+   (if (= N (count q))
      (cons q z)
      (if (< ix N)
-       (let [g (find-game z find-all-games q ix N)]
-         (recur (inc ix) (concat z g) q N))
+       (let [z1 (find-games-at-pos ix find-all-games z q N)]
+         (recur (inc ix) z1 q N))
        z))))
 
 (count (find-all-games [] 8))
