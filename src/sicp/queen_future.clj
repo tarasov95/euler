@@ -1,5 +1,7 @@
 (ns sicp.queen-future
-  (:require [sicp.queen-puzzle :as qp]))
+  (:require
+   [clojure.core.async :as async :refer [chan thread >!! <!!]]
+   [sicp.queen-puzzle :as qp]))
 
 (defmacro logtime
   [label expr]
@@ -26,9 +28,25 @@
             (range N))]
    (logtime "Pmap" (count (mapcat identity rq)))))
 
-(let [N 12
-      c1 (future (count-sequent N))
-      c2 (future (count-concur N))]
-  (logtime "Total" (println "c1=" @c1 "; c2=" @c2))
-  (println "c3=" (count-pmap N)))
+(defn solve-concur [N]
+  (let [c1 (future (count-sequent N))
+        c2 (future (count-concur N))]
+   (logtime "Total" (println "c1=" @c1 "; c2=" @c2))
+   (println "c3=" (count-pmap N))))
 
+(defn solve-async [N]
+  (logtime "Total-async"
+   (let [a (chan)
+         z (chan)
+         rez (fn [_] (<!! z))]
+     ;;prepare calculators
+     (dotimes [ix N] 
+       (thread
+         (let [g (logtime
+                  (str "Calc" ix)
+                  (find-games-starting-at N (<!! a )))]
+           (>!! z g))))
+     ;;start calculations
+     (dotimes [ix N] (>!! a ix))
+     ;;mustn't block because the number of calculators is N
+     (println "c=" (count (mapcat rez (range N)))))))
