@@ -1,20 +1,34 @@
 (ns sicp.queen-future
   (:require [sicp.queen-puzzle :as qp]))
 
+(defmacro logtime
+  [label expr]
+  `(let [start# (. System (nanoTime))
+         ret# ~expr]
+     (prn (str ~label " in " (/ (double (- (. System (nanoTime)) start#)) 1000000.0) " ms."))
+     ret#))
+
 (defn find-games-starting-at [N p]
   (qp/find-all-games [p] N))
 
 (defn count-sequent [N]
-  (time (count (mapcat (partial find-games-starting-at N) (range N)))))
+  (logtime "Sequent" (count (mapcat (partial find-games-starting-at N) (range N)))))
 
 (defn count-concur [N]
   (let [rq (map
             (fn [p] (future (find-games-starting-at N p)))
             (range N))]
-   (time (count (mapcat deref rq)))))
+    (logtime "Concur" (count (mapcat deref rq)))))
+
+(defn count-pmap [N]
+  (let [rq (pmap
+            (partial find-games-starting-at N)
+            (range N))]
+   (logtime "Pmap" (count (mapcat identity rq)))))
 
 (let [N 12
       c1 (future (count-sequent N))
       c2 (future (count-concur N))]
-  (time (println "c1=" @c1 "; c2=" @c2)))
+  (logtime "Total" (println "c1=" @c1 "; c2=" @c2))
+  (println "c3=" (count-pmap N)))
 
