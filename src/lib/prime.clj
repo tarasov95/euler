@@ -4,7 +4,6 @@
 (defn prime? [rg n]
   (not (some #(zero? (mod n %)) rg)))
 
-
 (defn primes-below
   ([N] (primes-below prime-seed (+ 2 (last prime-seed)) N))
   ([z ix N]
@@ -26,8 +25,9 @@
   ([] (primes-all prime-seed prime-seed))
   ([z-full z-rest]
    (lazy-seq
-    (let [p  (find-next-prime z-full)]
-      (cons
-       (first z-rest)
-       (primes-all (conj z-full p) (conj (subvec z-rest 1) p)))))))
-
+    (if (empty? z-rest)
+      (let [p (find-next-prime z-full)]
+        (cons p
+              (primes-all (conj z-full p) nil)))
+      (cons (first z-rest)
+            (primes-all z-full (subvec z-rest 1)))))))
