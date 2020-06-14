@@ -1,58 +1,42 @@
 (ns app.prob27
-  (:require [prob7 :as p7]
+  (:require [lib.prime :refer :all]
             [clojure.java.io :as io]
             [clojure.edn :as edn]))
 
 ;; https://projecteuler.net/problem=27
 
-;; (defn gen-primes []
-;;   (let [fl (io/file "resources/prime10000.edn")]
-;;    (if (.exists fl)
-;;      (with-open [r (io/reader fl)]
-;;        (edn/read (java.io.PushbackReader. r)))
-;;      (with-open [w (io/writer fl)]
-;;        (binding [*out* w]
-;;          (let [q (take 100 (p3/prime-seq))]
-;;            (prn q)
-;;            q))))))
 
-;; (let [primes (cons 1 (take-while (fn [e] (< e 20)) (p7/prime-seq)))]
-;;   (concat (map - primes) primes))
+(def primes4all (primes-all))
+(def is-prime? (partial prime? primes4all))
 
-;; (take 200 (p7/prime-seq))
+(defn list-of-b []
+  (take-while #(<= % 1000) primes4all))
 
-(defn prime? [rg n]
-  (not (some #(zero? (mod n %)) rg)))
+(defn list-of-a
+  ([b] (concat
+        (list-of-a find-prev-prime b b '())
+        (list-of-a find-next-prime b b '())))
+  ([find b p z]
+   (if-let [p (find primes4all p)]
+     (let [a (dec (- p b))]
+       (if (< (Math/abs a) 1000)
+         (recur find b p (conj z a))
+         z))
+     z)))
 
-(def prime-seed [2 3 5 7 11 13 19])
+(defn quad [a b]
+  (fn [n] (+ (+ (* n n) (* a n)) b)))
 
-(defn primes-below
-  ([N] (sieve prime-seed (+ 2 (last prime-seed)) N))
-  ([z ix N]
-   (if (> ix N)
-     z
-     (if (prime? z ix)
-       (recur (conj z ix) (+ ix 2) N)
-       (recur z (+ ix 2) N)))))
+(defn max-quad-n [a b]
+  (let [qd (quad a b)]
+    (loop [n 0]
+      (if (is-prime? (qd n))
+        (recur (inc n))
+        n))))
 
-(defn find-next-prime
-  ([z] (find-next-prime z (last z)))
-  ([z p]
-   (loop [x (+ 2 p)]
-     (if (prime? z x)
-       x
-       (recur (+ 2 x))))))
-
-(defn primes-all
-  ([] (primes prime-seed prime-seed))
-  ([z-full z-rest]
-   (lazy-seq
-    (let [p  (find-next-prime z-full)]
-      (cons
-       (first z-rest)
-       (primes (conj z-full p) (conj (subvec z-rest 1) p)))))))
-
-(take 100 (primes-all))
-;; (find-next-prime prime-seed)
-;; (sieve 100)
-;; (prime? [2 3 5 7 11 13 19] 21)
+(let [ab     (mapcat (fn [b] (map #(vector % b) (list-of-a b)))
+                     (list-of-b))
+      maxq   (fn [vec] (apply max-quad-n vec))
+      max-ab (reduce (partial max-key maxq) ab)]
+  (println "[a,b]=" max-ab)
+  (println "rez=" (apply * max-ab)))
