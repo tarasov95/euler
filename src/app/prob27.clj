@@ -34,8 +34,16 @@
         (recur (inc n))
         n))))
 
-(let [ab     (mapcat (fn [b] (map #(vector % b) (list-of-a b)))
-                     (list-of-b))
+(defn pmapcat [fun coll]
+  (apply concat (pmap fun coll)))
+
+(defn list-of-ab []
+  (pmapcat
+   (fn [b] (map #(vector % b)
+                (list-of-a b)))
+   (list-of-b)))
+
+(let [ab     (list-of-ab)
       maxq   (fn [vec] (apply max-quad-n vec))
       max-ab (reduce (partial max-key maxq) ab)]
   (println "[a,b]=" max-ab)
