@@ -1,7 +1,6 @@
 (ns app.prob27
   (:require [lib.prime :refer :all]
-            [clojure.java.io :as io]
-            [clojure.edn :as edn]))
+            [clojure.core.reducers :as r]))
 
 ;; https://projecteuler.net/problem=27
 
@@ -43,8 +42,28 @@
                 (list-of-a b)))
    (list-of-b)))
 
-(let [ab     (list-of-ab)
-      maxq   (fn [vec] (apply max-quad-n vec))
-      max-ab (reduce (partial max-key maxq) ab)]
-  (println "[a,b]=" max-ab)
-  (println "rez=" (apply * max-ab)))
+(defn solve-seq []
+  (let [ab     (list-of-ab)
+        maxq   (fn [vec] (apply max-quad-n vec))
+        max-ab (reduce (partial max-key maxq) ab)]
+    (println "[a,b]=" max-ab)
+    (println "max-n=", (maxq max-ab))
+    (println "rez=" (apply * max-ab))))
+
+(defn r-list-of-ab []
+  (r/mapcat
+   (fn [b] (r/map #(vector % b)
+                  (vec (list-of-a b))))
+   (vec (list-of-b))))
+
+(def r-max (r/monoid max (constantly Long/MIN_VALUE)))
+
+(defn max-quad-n-vec [ab-vec]
+  (apply max-quad-n ab-vec))
+
+(defn r-solve []
+  (->> (r-list-of-ab)
+       (r/map max-quad-n-vec)
+       (r/fold r-max)))
+
+;; (time (r-solve))
