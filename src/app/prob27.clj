@@ -56,14 +56,23 @@
                   (vec (list-of-a b))))
    (vec (list-of-b))))
 
-(def r-max (r/monoid max (constantly Long/MIN_VALUE)))
+;; (def r-max (r/monoid max (constantly Long/MIN_VALUE)))
+
+(def r-max
+  (r/monoid (fn [e1 e2]
+              (if (> (:n e1) (:n e2))
+                e1
+                e2))
+            (constantly {:n Long/MIN_VALUE})))
 
 (defn max-quad-n-vec [ab-vec]
-  (apply max-quad-n ab-vec))
+  {:n  (apply max-quad-n ab-vec)
+   :ab ab-vec})
 
 (defn r-solve []
   (->> (r-list-of-ab)
        (r/map max-quad-n-vec)
        (r/fold r-max)))
 
-;; (time (r-solve))
+;; (time (solve-seq))
+(time (println (r-solve)))
