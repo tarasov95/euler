@@ -1,5 +1,5 @@
 (ns lib.prime
-  (:require [lib.prime-data :refer :all]))
+  (:require [lib.prime-data :as data]))
 
 (defn prime? [rg n]
   (and (>= n 2)
@@ -8,7 +8,7 @@
              (take-while #(<= (* % %) n) rg)))))
 
 (defn primes-below
-  ([N] (primes-below prime-seed (+ 2 (last prime-seed)) N))
+  ([N] (primes-below data/prime-seed (+ 2 (last data/prime-seed)) N))
   ([z ix N]
    (if (> ix N)
      z
@@ -46,6 +46,31 @@
               (primes-all (conj z-full p) nil)))
       (cons (first z-rest)
             (primes-all z-full (subvec z-rest 1)))))))
+
+(def ^:dynamic *prime-feed* (primes-all))
+(def is-prime? (partial prime? *prime-feed*))
+
+(defn fac-pow
+  "caclulates power of the prime factor p in the number n"
+  [n p]
+  (loop [pow 0 ;;power of the factor
+         ppow 1 ;;factor to the power
+         cur n]
+    (if (= 0 (mod cur p))
+      (recur (inc pow) (* ppow p) (quot cur p))
+      {:pow pow :ppow ppow})))
+
+(defn prime-fact
+  ([n] (prime-fac *prime-feed* n))
+  ([prime-feed n]
+   (let [p (first prime-feed)]
+     (if (<= n 1)
+       []
+       (let [fac (fac-pow n p)]
+        (if (> (:pow fac) 0)
+          (conj (prime-fac (rest prime-feed) (quot n (:ppow fac)))
+                {:fac p :pow (:pow fac)})
+          (prime-fac (rest prime-feed) n)))))))
 
 ;; (defn gen-primes []
 ;;   (let [fl (io/file "resources/prime10000.edn")]
