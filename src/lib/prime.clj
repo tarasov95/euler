@@ -37,7 +37,7 @@
   ([z p] (find-prime - z p)))
 
 (defn primes-all
-  ([] (primes-all prime-seed prime-seed))
+  ([] (primes-all data/prime-seed data/prime-seed))
   ([z-full z-rest]
    (lazy-seq
     (if (empty? z-rest)
@@ -61,16 +61,17 @@
       {:pow pow :ppow ppow})))
 
 (defn prime-fact
-  ([n] (prime-fac *prime-feed* n))
+  ;;TODO: refactor to use a simple (guess-next-factor) instead of the *prime-feed*
+  ([n] (prime-fact *prime-feed* n))
   ([prime-feed n]
    (let [p (first prime-feed)]
      (if (<= n 1)
        []
        (let [fac (fac-pow n p)]
         (if (> (:pow fac) 0)
-          (conj (prime-fac (rest prime-feed) (quot n (:ppow fac)))
+          (conj (prime-fact (rest prime-feed) (quot n (:ppow fac)))
                 {:fac p :pow (:pow fac)})
-          (prime-fac (rest prime-feed) n)))))))
+          (prime-fact (rest prime-feed) n)))))))
 
 ;; (defn gen-primes []
 ;;   (let [fl (io/file "resources/prime10000.edn")]
