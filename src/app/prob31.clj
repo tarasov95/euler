@@ -10,28 +10,15 @@
   (->> (range-of-coin-* amount c)
        (map (fn [m] {:$ c :* m :v (* c m)}))))
 
-(defn join [l r]
-  (->> l
-       (map (fn [el] (map (fn [er] (conj el er)) r)))))
+(defn change
+  ([amount coins] (change [] [] amount coins))
+  ([z y amount coins]
+   (if (or (empty? coins) (= 0 amount))
+     (if (= 0 amount) (conj z y) z)
+     (let [c (first coins)]
+       (->> (try-one-coin amount c)
+            (mapcat (fn [e] (change z (conj y e) (- amount (:v e)) (rest coins))))
+            (filter not-empty))))))
 
-(defn change-intl [z amount coins]
-  (if (or (empty? coins) (= 0 amount))
-    (if (= 0 amount) z nil)
-    (let [c (first coins)]
-      (->> (try-one-coin amount c)
-           (map
-            (fn [e] (change-intl (conj z e) (- amount (:v e)) (rest coins)) ))
-           (filter not-empty)))))
-
-(defn change [z amount coins]
-  (if (or (empty? coins) (= 0 amount))
-    (if (= 0 amount) z nil)
-    (let [c (first coins)]
-      (->> (try-one-coin amount c)
-           (mapcat
-            (fn [e] (change-intl [e] (- amount (:v e)) (rest coins)) ))
-           (filter not-empty)))))
-
-(change (vector) 100 [25 15 50])
-;; (join [[1 2] [3 4]] [])
+(count (change 100 [1 5 10 25 50]))
 
