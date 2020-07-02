@@ -16,3 +16,10 @@
     (conj
      (num2dig B (quot n B))
      (mod n B))))
+
+(defn gcd [n1 n2]
+  (cond
+    (< n1 0)  1
+    (= n1 n2) n1
+    (> n1 n2) (recur (- n1 n2) n2)
+    :else (recur (- n2 n1) n1)))
