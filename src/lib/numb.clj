@@ -23,3 +23,12 @@
     (= n1 n2) n1
     (> n1 n2) (recur (- n1 n2) n2)
     :else (recur (- n2 n1) n1)))
+
+(defn fact
+  ([n] (if (= n 0)
+         1
+         (fact 1 n)))
+  ([z n]
+   (if (= 1 n)
+     z
+     (recur (* z n) (dec n)))))
