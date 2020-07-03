@@ -8,7 +8,10 @@
              (take-while #(<= (* % %) n) rg)))))
 
 (defn primes-below
-  ([N] (primes-below data/prime-seed (+ 2 (last data/prime-seed)) N))
+  ([N] (let [last-known (last data/prime-seed)]
+         (if (<= N last-known)
+           (take-while #(<= % N) data/prime-seed)
+           (primes-below data/prime-seed (+ 2 last-known) N))))
   ([z ix N]
    (if (> ix N)
      z
