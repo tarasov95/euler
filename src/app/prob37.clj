@@ -33,6 +33,7 @@
           (:z y))
      :pr (conj (:pr y) e)}))
 
-(->> (prime/primes-all)
-     (reduce solution {:z [] :pr #{}})
-     (reduce +))
+(time
+ (->> (prime/primes-all)
+      (reduce solution {:z [] :pr #{}})
+      (reduce +)))
