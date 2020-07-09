@@ -17,6 +17,14 @@
      (num2dig B (quot n B))
      (mod n B))))
 
+(defn dig2num
+  "returns number from array of it's digits in numberal system with base"
+  ([base digits] (dig2num 0 base digits))
+  ([z base digits]
+   (if (empty? digits)
+     z
+     (recur (+ (first digits) (* base z)) base (rest digits)))))
+
 (defn gcd
   "greates common divider"
   [n1 n2]
