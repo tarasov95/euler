@@ -56,3 +56,36 @@
              (fn [pw] (list `(< ~arg ~pw) (/ pw 10)))
              (map #(pow-int 10 %) (range 1 (inc max-pow))))]
     `(cond ~@cnd)))
+
+(defn dig-mask [n]
+  (if (= 0 n)
+    (long 1)
+    (loop [mask (long 0)
+          q n]
+     (let [d (mod q 10)]
+       (if
+           (= 0 q) mask
+           (recur (bit-set mask d) (quot q 10)))))))
+
+(defn any-dig-in?
+  "checks if the number contains any digits encoded in the bit mask"
+  [mask n]
+  (if (= 0 n)
+    (bit-test mask 0)
+    (loop [q n]
+      (let [d (mod q 10)]
+        (cond
+          (= 0 q) false
+          (bit-test mask d) true
+          :else (recur (quot q 10)))))))
+
+(defn all-dig-diff?
+  "checks if all digits are different, supports numbers up to 64 decimal digits long"
+  [n]
+  (loop [mask (long 0)
+         q n]
+    (let [d (mod q 10)]
+      (cond
+        (= 0 q) true
+        (bit-test mask d) false
+        :else (recur (bit-set mask d) (quot q 10))))))
