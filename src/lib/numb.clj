@@ -89,3 +89,6 @@
         (= 0 q) true
         (bit-test mask d) false
         :else (recur (bit-set mask d) (quot q 10))))))
+
+(defn natural? [x]
+  (< (- x (Math/floor x)) 0.00000001))
