@@ -15,6 +15,8 @@
 ;; Every hexagonal number is a triangular number, but only every other triangular number (the 1st, 3rd, 5th, 7th, etc.) is a hexagonal number. 
 
 ;; t(t+1)/2 = p(3p−1)/2 = h(2h−1)
+;; TODO: can skip checking for T since (Every hexagonal number is a triangular number)
+;; see also: https://en.wikipedia.org/wiki/Diophantine_equation
 
 (defn T [n]
   (/ (* n (inc n)) 2))
