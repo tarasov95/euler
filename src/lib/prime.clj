@@ -63,26 +63,36 @@
       (recur (inc pow) (* ppow p) (quot cur p))
       {:pow pow :ppow ppow})))
 
-(defn prime-fact
+(defn prime-fact1
   ;;TODO: refactor to use a simple (guess-next-factor) instead of the *prime-feed*
-  ([n] (prime-fact *prime-feed* n))
+  ([n] (prime-fact1 *prime-feed* n))
   ([prime-feed n]
    (let [p (first prime-feed)]
      (if (<= n 1)
        []
        (let [fac (fac-pow n p)]
-        (if (> (:pow fac) 0)
-          (conj (prime-fact (rest prime-feed) (quot n (:ppow fac)))
-                {:fac p :pow (:pow fac)})
-          (prime-fact (rest prime-feed) n)))))))
+         (if (> (:pow fac) 0)
+           (conj (prime-fact1 (rest prime-feed) (quot n (:ppow fac)))
+                 {:fac p :pow (:pow fac)})
+           (prime-fact1 (rest prime-feed) n)))))))
 
-;; (defn gen-primes []
-;;   (let [fl (io/file "resources/prime10000.edn")]
-;;    (if (.exists fl)
-;;      (with-open [r (io/reader fl)]
-;;        (edn/read (java.io.PushbackReader. r)))
-;;      (with-open [w (io/writer fl)]
-;;        (binding [*out* w]
-;;          (let [q (take 100 (p3/prime-seq))]
-;;            (prn q)
-;;            q))))))
+(defn prime-fact
+  ([n] (prime-fact [] 2 n))
+  ([z fact-guess n]
+   (cond
+     (<= n 1) z
+     (> (* fact-guess fact-guess) n) (conj z {:fac n :pow 1}) ;;it's a prime
+     :else
+     (let [next-guess (if (< fact-guess 3) 3 (+ fact-guess 2))
+           fac (fac-pow n fact-guess)]
+       (if (> (:pow fac) 0)
+         (recur (conj z {:fac fact-guess :pow (:pow fac)})
+                next-guess
+                (quot n (:ppow fac)))
+         (recur z next-guess n))))))
+
+;; test
+;; (->> (range 1 10000)
+;;      (map (fn [e] (= (sort-by #(:fac %) (prime-fact1 e))
+;;                      (sort-by #(:fac %) (prime-fact e)))))
+;;      (filter not))
