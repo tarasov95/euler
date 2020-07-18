@@ -16,16 +16,16 @@
 
 (defn candidates [cFactors]
   (->> (drop 6 (range))
-       (map #(vector (prime/prime-fact %) %))
-       (filter #(= cFactors (->> % (first) (into #{}) (count))))))
+       (filter #(= cFactors
+                   (->> (prime/prime-fact %) (into #{}) (count))))))
 
 (defmacro gen-conseq-eq [N]
-  (let [arg (map #(gensym (str "v" % "_")) (range 1 (inc N)))]
+  (let [arg (map #(symbol (str "v" %)) (range 1 (inc N)))]
     `(fn [~@arg]
        (= ~@(map-indexed (fn [i a] `(- ~a ~i)) arg)))))
 
 (defn solve []
-  (let [r1 (map second (candidates 4))
+  (let [r1 (candidates 4)
         r2 (drop 1 r1)
         r3 (drop 2 r1)
         r4 (drop 3 r1)
