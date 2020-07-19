@@ -37,4 +37,14 @@
           (map distinct)
           (map (partial apply str)))]))
 
-(time (solve))
+(defn solve-xf []
+  (let [xf (comp
+            (mapcat map-diff)
+            (filter (comp not empty?))
+            (map (partial apply concat))
+            (map distinct)
+            (map (partial apply str)))]
+    (into [] xf (candidates))))
+
+(time (println "solve" (doall (solve))))
+(time (println "solve-xf" (doall (solve-xf))))
