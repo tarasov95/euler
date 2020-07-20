@@ -14,11 +14,23 @@
   (-> s second count))
 
 (defn max-len-sum [s1 s2]
-  (if (> (len s1) (len s2))
-    s1
-    s2))
+  (cond
+    (= nil s1) s2
+    (= nil s2) s1
+    (> (len s1) (len s2)) s1
+    :else s2))
 
-(defn solve [N]
+(defn find-max-len [rg]
+  (if (empty? rg)
+    nil
+    (reduce (partial max-key len) rg)))
+
+(defn r-max
+  ([] [0 []])
+  ([e1] e1)
+  ([e1 e2] (max-len-sum e1 e2)))
+
+(defn solve-lazy [N]
   (let [*pseq* (prime/primes-below N)
         *pset* (into #{} *pseq*)]
     (loop [rg   *pseq*
@@ -39,7 +51,31 @@
            next
            (->> next
                 (filter (comp *pset* first))
-                (reduce (partial max-key len))
+                (find-max-len)
                 (max-len-sum z))))))))
 
-(time (first (solve 1000000)))
+(defn solve-eager [N]
+  (let [*pseq* (prime/primes-below N)
+        *pset* (into #{} *pseq*)]
+    (loop [rg   *pseq*
+           sums [] ;;seq of [sum [addends]]
+           z    [0 []]]
+      (if (empty? rg)
+        z
+        (let [p (first rg)
+              next (comp
+                    (map #(vector
+                           (+ p (first %))
+                           (conj (second %) p)))
+                    (filter #(<= (first %) N)))
+              nsums (into [] next sums)]
+          (recur
+           (rest rg)
+           (conj  nsums [p [p]])
+           (->> (transduce (filter #(*pset* (first %)))
+                           r-max
+                           nsums)
+                (max-len-sum z))))))))
+
+(time (println "solve-lazy" (first (solve-lazy 1000000))))
+(time (println "solve-eager" (first (solve-eager 1000000))))
