@@ -91,21 +91,23 @@
          nil
          (gen-num-vec [~@forb])))))
 
-;; (defmacro pat-fam [N mask]
-;;   `(->> (range 0 10)
-;;         (mapcat (fn [d#] (gen-for-pat ~N ~mask d#)))
-;;         (filter prime/is-prime?)))
+(defmacro all-pats [N len]
+  (let [pats (gen-pat-mask N)
+        pw10 (numb/pow-int 10 (dec N))]
+    `(->> (concat ~@(map (fn [p] `(gen-for-pat ~N ~p)) pats))
+          (into [] (comp
+                    (filter #(or (= nil %) (>= % ~pw10)))
+                    (partition-by (partial = nil))
+                    (filter #(not= nil (first %)))
+                    (map #(filter prime/is-prime? %))
+                    (filter (comp not empty?))
+                    (filter #(>= (count %) ~len))
+                    (take 1))))))
 
-;; (count (pat-fam 5 0x2A))
-;; (binding [*print-meta* true]
-;;   (pr (brute1)))
-;; (macroexpand-1 '(pat-fam 5 0x2A))
-(->> (gen-for-pat 5 0x2A)
-     (partition-by (partial = nil))
-     (filter #(not= nil (first %)))
-     (map (fn [r] (filter prime/is-prime? r)))
-     (filter (comp not empty?))
-     (take 20))
+(time (doall (all-pats 6 8)))
+;; (macroexpand-1 '(all-pats 3 4))
+;; (time (binding [*print-meta* true]
+;;    (pr (brute1))))
 ;; (macroexpand-1 '(gen-for-pat 5 0x2A))
 ;; (macroexpand-1 '(gen-num-vec [1 2 3 4]))
 
