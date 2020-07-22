@@ -1,6 +1,7 @@
 (ns app.prob51
   (:require
    [lib.prime :as prime]
+   [lib.seq :as sq]
    [lib.numb :as numb]))
 
 ;; https://projecteuler.net/problem=51
@@ -40,12 +41,12 @@
 
 (defn prime-family [N p mask]
   (let [z (into []
-           (comp
-            (filter #(not (and (bit-test mask 0) (#{0 2 5} %))))
-            (filter #(not (and (= 0 %) (bit-test mask (dec N)))))
-            (map #(apply-pat mask % p))
-            (filter prime/is-prime?))
-           (range 0 10))]
+                (comp
+                 (filter #(not (and (bit-test mask 0) (#{0 2 5} %))))
+                 (filter #(not (and (= 0 %) (bit-test mask (dec N)))))
+                 (map #(apply-pat mask % p))
+                 (filter prime/is-prime?))
+                (range 0 10))]
     (with-meta [p z] {:p p :m (Integer/toBinaryString mask)})))
 
 (defn all-prime-pats [N p]
@@ -58,9 +59,38 @@
     (mapcat (partial all-prime-pats N) rg)))
 
 (defn brute1 []
-       (->> (solve4primes 6)
-      (filter #(>= (count (second %)) 8))
-      (first)))
+  (->> (solve4primes 6)
+       (filter #(>= (count (second %)) 8))
+       (first)))
 
-(binding [*print-meta* true]
-  (pr (brute1)))
+(defmacro gen-num-vec [rg]
+  (loop [z []
+         pw10 1
+         v (reverse rg)]
+    (if (empty? v)
+      `(+ ~@z)
+      (recur
+       (conj z (list '* pw10 (first v)))
+       (* 10 pw10)
+       (rest v)))))
+
+(defmacro gen-for-pat [N mask dig]
+  (let [rg   (fn [i]
+               (if (or (= i 0) (= i (dec N)))
+                 '(range 1 10)
+                 '(range 0 10)))
+        ix   (range 0 N)
+        vars (into [] (map #(gensym (str "v" % "_")) ix))
+        forh (mapcat (fn [i] (when (not (bit-test mask i))
+                               (list (vars i) (rg i)))) ix)
+        forb (map #(if (bit-test mask %) dig (vars %)) ix)]
+    `(for [~@forh]
+       (gen-num-vec [~@forb]))))
+
+;; (macroexpand-1 '(gen-for-pat 5 0x2A 3))
+;; (macroexpand-1 '(gen-num-vec [1 2 3 4]))
+
+(count (gen-for-pat 5 0x2A 3))
+
+;; (binding [*print-meta* true]
+;;   (pr (brute1)))
