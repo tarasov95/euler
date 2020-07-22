@@ -74,23 +74,38 @@
        (* 10 pw10)
        (rest v)))))
 
-(defmacro gen-for-pat [N mask dig]
+(defmacro gen-for-pat [N mask]
   (let [rg   (fn [i]
                (if (or (= i 0) (= i (dec N)))
                  '(range 1 10)
                  '(range 0 10)))
         ix   (range 0 N)
+        dig  (gensym "dig")
         vars (into [] (map #(gensym (str "v" % "_")) ix))
-        forh (mapcat (fn [i] (when (not (bit-test mask i))
-                               (list (vars i) (rg i)))) ix)
+        forh (mapcat #(when (not (bit-test mask %))
+                        (list (vars %) (rg %))) ix)
         forb (map #(if (bit-test mask %) dig (vars %)) ix)]
-    `(for [~@forh]
-       (gen-num-vec [~@forb]))))
+    `(for [~@forh
+           ~dig (range -1 10)]
+       (if (= ~dig -1)
+         nil
+         (gen-num-vec [~@forb])))))
 
-;; (macroexpand-1 '(gen-for-pat 5 0x2A 3))
-;; (macroexpand-1 '(gen-num-vec [1 2 3 4]))
+;; (defmacro pat-fam [N mask]
+;;   `(->> (range 0 10)
+;;         (mapcat (fn [d#] (gen-for-pat ~N ~mask d#)))
+;;         (filter prime/is-prime?)))
 
-(count (gen-for-pat 5 0x2A 3))
-
+;; (count (pat-fam 5 0x2A))
 ;; (binding [*print-meta* true]
 ;;   (pr (brute1)))
+;; (macroexpand-1 '(pat-fam 5 0x2A))
+(->> (gen-for-pat 5 0x2A)
+     (partition-by (partial = nil))
+     (filter #(not= nil (first %)))
+     (map (fn [r] (filter prime/is-prime? r)))
+     (filter (comp not empty?))
+     (take 20))
+;; (macroexpand-1 '(gen-for-pat 5 0x2A))
+;; (macroexpand-1 '(gen-num-vec [1 2 3 4]))
+
