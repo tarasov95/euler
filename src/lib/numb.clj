@@ -57,15 +57,21 @@
              (map #(pow-int 10 %) (range 1 (inc max-pow))))]
     `(cond ~@cnd)))
 
-(defn dig-mask [n]
+(defn dig-mask-count-repeats [n]
   (if (= 0 n)
-    (long 1)
-    (loop [mask (long 0)
-          q n]
-     (let [d (mod q 10)]
-       (if
-           (= 0 q) mask
-           (recur (bit-set mask d) (quot q 10)))))))
+    [(int 1) 0]
+    (loop [mask (int 0)
+           q n
+           c 0]
+      (let [d (mod q 10)
+            f (bit-test mask d)]
+        (if (= 0 q) [mask c]
+            (recur (bit-set mask d)
+                   (quot q 10)
+                   (if f (inc c) c)))))))
+
+(defn dig-mask [n]
+  (first (dig-mask-count-repeats n)))
 
 (defn any-dig-in?
   "checks if the number contains any digits encoded in the bit mask"
