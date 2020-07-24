@@ -15,10 +15,14 @@
 (defn for-mask [N]
   (range 1 (dec (numb/pow-int 2 N))))
 
+;; (->> (range 0 N)
+;;              (map #(if (bit-test mask %) 1 0))
+;;              (reduce +))
+
 (defn get-dig-pw [N mask]
-  (->> (range 0 N)
-       (map #(if (bit-test mask %) 1 0))
-       (reduce +)))
+  (transduce (map #(if (bit-test mask %) 1 0))
+             +
+             (range 0 N)))
 
 (defn for-dig
   "simulate (for [d1 (range 0 10) ... dn (range 0 10)] [d1...dn]) with numbers
@@ -30,9 +34,9 @@
       (range (quot pw10 10) pw10)
       (range pw10 (* 2 pw10)))))
 
-(comment (defn for-dig [N mask]
-   (let [pw10 (numb/pow-int 10 (get-dig-pw N mask))]
-     (range (quot pw10 10) pw10))))
+;; (comment (defn for-dig [N mask]
+;;    (let [pw10 (numb/pow-int 10 (get-dig-pw N mask))]
+;;      (range (quot pw10 10) pw10))))
 
 (defn mask-dig
   "when (bit-test mask)=>1 use one from digs(a-dig) else use the-dig"
@@ -49,31 +53,30 @@
                (* 10 pw10)
                (if f (quot n 10) n))))))
 
-(defn pat-fam [N mask digs]
+(defn pat-fam
+  "generates a pattern family by applying mask to the digs and rotating all of the possible the-dig in the innermost loop"
+  [N mask digs]
   (with-meta
     (->> (if (and (bit-test mask (dec N))
                   (bit-test mask 0)) ;;use a-dig both in the lowest and the highest digits
-          (range 0 10)
-          (range 1 10))
+           (range 0 10)
+           (range 1 10))
          (map (partial mask-dig N mask digs)))
-    {:m mask :d digs}))
+    {:m (Integer/toBinaryString mask) :d digs}))
 
-;; 101
-;; (mask-dig 3 0x5 123 9)
-;; (mask-dig 3 0x3 142 9)
+(defn gen-pats [N z-filter]
+  (mapcat (fn [mask]
+            (->> (for-dig N mask)
+                 (map (fn [digs]
+                        (->> (pat-fam N mask digs)
+                             (filter z-filter))))))))
 
-(defn solve [N]
-  (->> (for-mask N)
-       (map (fn [m]
-              (map (fn [d] (pat-fam N m d)) (for-dig N m))))))
+(defn solve [N len]
+  (into []
+        (comp
+         (gen-pats N prime/is-prime?)
+         (filter #(= len (count %)))
+         (take 1))
+        (for-mask N)))
 
-
-;; (count (for-dig 2))
-
-;; (pat-fam 3 0x5 123)
-
-(binding [*print-meta* true] (pr (solve 2)))
-(comment (map (partial take 10)
-      (list (for-dig 4 0x7)
-            (for-dig 4 0xD)
-            (list (numb/pow-int 10 (get-dig-pw 4 0x8))))))
+(time (doall (solve 6 8)))
