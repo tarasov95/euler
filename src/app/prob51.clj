@@ -58,8 +58,13 @@
         rg (drop-while (partial > pw10) (prime/primes-below (* 10 pw10)))]
     (mapcat (partial all-prime-pats N) rg)))
 
+(defn solve4ints [N]
+  (let [pw10 (numb/pow-int 10 (dec N))
+        rg (range pw10 (* 10 pw10))]
+    (mapcat (partial all-prime-pats N) rg)))
+
 (defn brute1 []
-  (->> (solve4primes 6)
+  (->> (solve4ints 6)
        (filter #(>= (count (second %)) 8))
        (first)))
 
@@ -104,10 +109,10 @@
                     (filter #(>= (count %) ~len))
                     (take 1))))))
 
-(time (doall (all-pats 6 8)))
+;; (time (doall (all-pats 6 8)))
 ;; (macroexpand-1 '(all-pats 3 4))
-;; (time (binding [*print-meta* true]
-;;    (pr (brute1))))
+(time (binding [*print-meta* true]
+   (pr (brute1))))
 ;; (macroexpand-1 '(gen-for-pat 5 0x2A))
 ;; (macroexpand-1 '(gen-num-vec [1 2 3 4]))
 
