@@ -22,7 +22,7 @@
 
 (defn for-dig
   "simulate (for [d1 (range 0 10) ... dn (range 0 10)] [d1...dn]) with numbers
-  when (bit-test mask 'eldest')=>1 (i.e. use a dig there) generate a range without the leading 0
+  when (bit-test mask 'eldest')=>1 (i.e. use a-dig there) generate a range without the leading 0
   else generate a range with one extra digit on the left hand side to have 0 in the digit next to it"
   [N mask]
   (let [pw10 (numb/pow-int 10 (get-dig-pw N mask))]
@@ -35,7 +35,7 @@
      (range (quot pw10 10) pw10))))
 
 (defn mask-dig
-  "when (bit-test mask)=>1 use one from digs else use the-dig"
+  "when (bit-test mask)=>1 use one from digs(a-dig) else use the-dig"
   [N mask digs the-dig]
   (loop [z 0
          ix 0
@@ -52,7 +52,7 @@
 (defn pat-fam [N mask digs]
   (with-meta
     (->> (if (and (bit-test mask (dec N))
-                  (bit-test mask 0))
+                  (bit-test mask 0)) ;;use a-dig both in the lowest and the highest digits
           (range 0 10)
           (range 1 10))
          (map (partial mask-dig N mask digs)))
