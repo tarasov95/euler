@@ -15,10 +15,6 @@
 (defn for-mask [N]
   (range 1 (dec (numb/pow-int 2 N))))
 
-;; (->> (range 0 N)
-;;              (map #(if (bit-test mask %) 1 0))
-;;              (reduce +))
-
 (defn get-dig-pw [N mask]
   (transduce (map #(if (bit-test mask %) 1 0))
              +
@@ -33,10 +29,6 @@
     (if (bit-test mask (dec N))
       (range (quot pw10 10) pw10)
       (range pw10 (* 2 pw10)))))
-
-;; (comment (defn for-dig [N mask]
-;;    (let [pw10 (numb/pow-int 10 (get-dig-pw N mask))]
-;;      (range (quot pw10 10) pw10))))
 
 (defn mask-dig
   "when (bit-test mask)=>1 use one from digs(a-dig) else use the-dig"
@@ -73,10 +65,22 @@
 
 (defn solve [N len]
   (into []
-        (comp
-         (gen-pats N prime/is-prime?)
-         (filter #(= len (count %)))
-         (take 1))
+        (comp (gen-pats N prime/is-prime?)
+              (filter #(= len (count %)))
+              (take 1))
         (for-mask N)))
 
-(time (doall (solve 6 8)))
+(defn psolve [N len]
+  (->> (for-mask N)
+       (pmap (fn [mask]
+              (->> (for-dig N mask)
+                   (map (fn [digs]
+                          (->> (pat-fam N mask digs)
+                               (filter prime/is-prime?))))
+                   (filter #(= len (count %))))))
+       (filter (comp not empty?))
+       (take 1)))
+
+(time (println "solve" (doall (solve 6 8))))
+(time (println "psolve" (doall (psolve 6 8))))
+
