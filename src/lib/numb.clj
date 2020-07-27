@@ -98,3 +98,23 @@
 
 (defn natural? [x]
   (< (- x (Math/floor x)) 0.00000001))
+
+(defn palindrome?
+  ([n] (palindrome? 1 0 n))
+  ([pw10 k n]
+   (if (= 0 (quot n pw10))
+     (or
+      (= n k)
+      (= n (quot k 10)))
+     (recur
+      (* 10 pw10)
+      (+ (* 10 k) (mod n 10))
+      (quot n 10)))))
+
+(defn reverse
+  ([n] (reverse 0 n))
+  ([z n]
+   (if (= 0 n)
+     z
+     (recur (+ (* 10 z) (mod n 10))
+            (quot n 10)))))
