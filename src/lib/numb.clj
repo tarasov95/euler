@@ -10,9 +10,9 @@
 
 (defn pow-mod
   "(x to the power of n) mod q"
-  ([q x n] (pow-mod x n 1))
+  ([q x n] (pow-mod q x n 1))
   ([q x n z]
-   (cond (= n 0) z
+   (cond (< n 1) z
          (even? n) (let [y (mod x q)]
                      (recur q (mod (* y y) q) (quot n 2) z))
          :else (recur q x (dec n) (mod (* (mod x q) (mod z q)) q)))))
