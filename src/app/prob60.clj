@@ -13,32 +13,40 @@
 (def lg10 (memoize (partial numb/log-int 10)))
 
 (defn prime? [prev n]
-  (let [q (long (Math/sqrt n))]
-    ;; (println n q (take-while (partial >= q) prev))
-    (->> (take-while (partial >= q) prev)
-         (every? #(not= 0 (mod n %))))))
+  (let [last-prime (prev (dec (count prev)))]
+    (if (< n last-prime)
+      (-> prev meta :pset n)
+      (let [q (long (Math/sqrt n))]
+        (->> (take-while (partial >= q) prev)
+             (every? #(not= 0 (mod n %))))))))
+
+(defn update-pset [new old n]
+  (with-meta new {:pset (conj (-> old meta :pset) n)}))
 
 (defn find-next-prime [prev]
   ;; (when (not (counted? prev))
   ;;   (throw (new Exception "prev must be counted")))
   (let [cnt (count prev)
         last-prime (prev (dec cnt))]
-    (when (= 0 (mod cnt 10000))
+    (when (= 0 (mod cnt 100000))
       (println cnt last-prime))
     (loop [step 2
            n (+ step last-prime)]
       (when (> (- n last-prime) 1000) (throw (new Exception (str "find-next-prime stuck at " n " started from " last-prime))))
       (if (prime? prev n)
-        (do
-          ;; (println "found-prime:" n)
-          (cons n (lazy-seq (find-next-prime (conj prev n)))))
+        (update-pset
+         (cons n (lazy-seq (find-next-prime (update-pset (conj prev n) prev n))))
+         prev n)
         (recur step (+ step n))))))
 
 ;; (def prime-seed [2 3 5 7 11])
 
-(def ^:private prime-inf (concat data/prime-seed (find-next-prime data/prime-seed)))
-
-(def check-prime (memoize (partial prime? prime-inf)))
+(def ^:private prime-inf
+  (let [seed data/prime-seed
+        pset {:pset (into #{} seed)}]
+    (with-meta
+      (concat seed (find-next-prime (with-meta seed pset)))
+      pset)))
 
 (defn cat-left [x y]
   (+ y
