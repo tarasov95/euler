@@ -8,6 +8,15 @@
          (even? n) (recur (* x x) (quot n 2) z)
          :else (recur x (dec n) (* x z)))))
 
+(defn pow-mod
+  "(x to the power of n) mod q"
+  ([q x n] (pow-mod x n 1))
+  ([q x n z]
+   (cond (= n 0) z
+         (even? n) (let [y (mod x q)]
+                     (recur q (mod (* y y) q) (quot n 2) z))
+         :else (recur q x (dec n) (mod (* (mod x q) (mod z q)) q)))))
+
 (defn num2dig
   "returns array of digits of n in numberal system with base B"
   [B n]

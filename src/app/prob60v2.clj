@@ -119,14 +119,10 @@
           (= y (dec n)) nil
           :else (recur (dec j) (mod (* y y) n)))))
 
-(defn pow-mod [div x n]
-  ;;pow-int from lib.numb causes intenger overflow due to squaring of the x, hence the simple loop
-  (loop [z 1
-         w n]
-    (if (= w 0)
-      (mod z div)
-      (recur (* x (mod z div))
-             (dec w)))))
+(defn ^:private mr-a [t]
+  ;; (rand-mr 2 (dec n))
+  (->> (list 2 3 5 7 11 13 17 19 23 29 31 37 41)
+       (take-while #(<= % t))))
 
 (defn prime-mr? [n]
   (cond
@@ -134,17 +130,15 @@
     (< n 4) true
     (= 0 (mod n 2)) false
     :else (let [[d s] (prime-mr-ds n)]
-            (loop [i 0
-                   ra (list 2,3,5,7,11,13,17)]
+            (loop [ra (mr-a (dec 1))]
               (if (empty? ra)
                 true
-                (let [a (rand-mr 2 (dec n));;(first ra)
-                      ;; x (long (mod (Math/pow a d) n))
-                      x (pow-mod n a d)]
+                (let [a (first ra)
+                      x (numb/pow-mod n a d)]
                   (if (or (= x 1) (= x (dec n)))
-                    (recur (inc i) (rest ra))
+                    (recur (rest ra))
                     (if (= nil (loop-j-mr x n s))
-                      (recur (inc i) (rest ra))
+                      (recur (rest ra))
                       false))))))))
 
 (defn prime? [seed n]
@@ -160,10 +154,10 @@
       z)))
 
 
-(->> data/prime-seed
-     (take 100)
-     (map prime-mr?))
-;; (time (count (filter not (map prime-mr? (take 10 data/prime-seed) ))))
+;; (->> data/prime-seed
+;;      (take 100)
+;;      (map prime-mr?))
+(time (count (filter not (map prime-mr? data/prime-seed ))))
 ;; [(prime-mr? 7)
 ;;  (prime-mr? 11)
 ;;  (prime-mr? 15)]
