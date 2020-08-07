@@ -1,5 +1,6 @@
 (ns lib.prime
-  (:require [lib.prime-data :as data]))
+  (:require [lib.prime-data :as data]
+            [lib.numb :as numb]))
 
 (defn prime? [rg n]
   (and (>= n 2)
@@ -96,3 +97,64 @@
 ;;      (map (fn [e] (= (sort-by #(:fac %) (prime-fact1 e))
 ;;                      (sort-by #(:fac %) (prime-fact e)))))
 ;;      (filter not))
+
+(defn rand-mr [x1 x2]
+  (+ x1 (rand-int (- x2 x1))))
+
+(defn ^:private prime-mr-ds [n]
+  (loop [s 0
+         d (dec n)]
+    (if (= 0 (mod d 2))
+      (recur (inc s) (quot d 2))
+      [d s])))
+
+(defn ^:private loop-j-mr [x n s]
+  (loop [j (dec s)
+         y (mod (* x x) n)]
+    (cond (= j 0) false
+          (= y 1) false
+          (= y (dec n)) nil
+          :else (recur (dec j) (mod (* y y) n)))))
+
+(def n2047 (list 2))
+(def n1373653 (list 2 3))
+(def n9090191 (list 31 73))
+(def n25326001 (list 2 3 5))
+(def n3215031751 (list 2 3 5 7))
+(def n1122004669633 (list 2 13 23 1662803))
+(def n2152302898747 (list 2 3 5 7 11))
+(def n3474749660383 (list 2 3 5 7 11 13))
+(def n341550071728321 (list 2 3 5 7 11 13 17))
+(def n3825123056546413051 (list 2 3 5 7 11 13 17 19 23))
+
+(defn ^:private mr-a [n]
+  ;; (rand-mr 2 (dec n))
+  (cond
+    (< n 2047) n2047
+    (< n 1373653) n1373653
+    (< n 9090191) n9090191
+    (< n 25326001) n25326001
+    (< n 3215031751) n3215031751
+    (< n 1122004669633) n1122004669633
+    (< n 2152302898747) n2152302898747
+    (< n 3474749660383) n3474749660383
+    (< n 341550071728321) n341550071728321
+    (< n 3825123056546413051) n3825123056546413051
+    :else (throw (new Exception "n is too large."))))
+
+(defn prime-mr? [n]
+  (cond
+    (< n 2) false
+    (< n 4) true
+    (= 0 (mod n 2)) false
+    :else (let [[d s] (prime-mr-ds n)]
+            (loop [ra (mr-a n)]
+              (if (empty? ra)
+                true
+                (let [a (first ra)
+                      x (numb/pow-mod n a d)]
+                  (if (or (= x 1) (= x (dec n)))
+                    (recur (rest ra))
+                    (if (= nil (loop-j-mr x n s))
+                      (recur (rest ra))
+                      false))))))))

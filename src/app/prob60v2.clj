@@ -109,16 +109,16 @@
           (= y (dec n)) nil
           :else (recur (dec j) (mod (* y y) n)))))
 
-(def n2047 [2])
-(def n1373653 [2 3])
-(def n9090191 [31 73])
-(def n25326001 [2 3 5])
-(def n3215031751 [2 3 5 7])
-(def n1122004669633 [2 13 23 1662803])
-(def n2152302898747 [2 3 5 7 11])
-(def n3474749660383 [2 3 5 7 11 13])
-(def n341550071728321 [2 3 5 7 11 13 17])
-(def n3825123056546413051 [2 3 5 7 11 13 17 19 23])
+(def n2047 (list 2))
+(def n1373653 (list 2 3))
+(def n9090191 (list 31 73))
+(def n25326001 (list 2 3 5))
+(def n3215031751 (list 2 3 5 7))
+(def n1122004669633 (list 2 13 23 1662803))
+(def n2152302898747 (list 2 3 5 7 11))
+(def n3474749660383 (list 2 3 5 7 11 13))
+(def n341550071728321 (list 2 3 5 7 11 13 17))
+(def n3825123056546413051 (list 2 3 5 7 11 13 17 19 23))
 
 (defn ^:private mr-a [n]
   ;; (rand-mr 2 (dec n))
@@ -140,17 +140,16 @@
     (< n 2) false
     (< n 4) true
     (= 0 (mod n 2)) false
-    :else (let [[d s] (prime-mr-ds n)
-                ra (mr-a n)]
-            (loop [ix (dec (count ra))]
-              (if (< ix 0)
+    :else (let [[d s] (prime-mr-ds n)]
+            (loop [ra (mr-a n)]
+              (if (empty? ra)
                 true
-                (let [a (ra ix)
+                (let [a (first ra)
                       x (numb/pow-mod n a d)]
                   (if (or (= x 1) (= x (dec n)))
-                    (recur (dec ix))
+                    (recur (rest ra))
                     (if (= nil (loop-j-mr x n s))
-                      (recur (dec ix))
+                      (recur (rest ra))
                       false))))))))
 
 ;; (mr-a 7)
@@ -160,9 +159,16 @@
 ;; (->> data/prime-seed
 ;;      (take 100)
 ;;      (map prime-mr?))
-(let [rg (range 2 10000000)]
-  ;; (time (println "is-prime?" (count (filter not (map prime/is-prime? rg)))))
-  (time (println "prime-mr?" (count (filter not (map prime-mr? rg))))))
+(defn count-primes-to [S E fn]
+  (loop [n S
+        c 0]
+    (if (> n E)
+     c
+     (recur (inc n) (if (fn n) (inc c) c)))))
+
+;; (time (println "prime-mr?" (count-primes-to 10000000 20000000 prime-mr?)))
+;; (time (println "prime/is-prime?" (count-primes-to 1000000 prime/is-prime?)))
+
 ;; [(prime-mr? 7)
 ;;  (prime-mr? 11)
 ;;  (prime-mr? 15)]
