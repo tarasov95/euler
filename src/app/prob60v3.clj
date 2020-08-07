@@ -26,7 +26,7 @@
   (t/is (= 377 (cat-right 7 37)))
   (t/is (= 7673 (cat-right 673 7))))
 
-(def check-prime (comp prime/prime-mr? bigint))
+(def check-prime (comp prime/is-prime? bigint))
 
 (defn in-family? [rg p]
   (not (transduce
@@ -66,11 +66,9 @@
 
 (defn join-if-family [p rg]
   (if (in-family? (second rg) p)
-    [(+ p (first rg)) (conj (second rg) p)]
-    rg))
-
-(t/deftest join-if-family-test
-  (t/is (= [119 [3 7 109]] (join-if-family 109 [10 [3 7]]))))
+    [rg
+     [(+ p (first rg)) (conj (second rg) p)]]
+    [rg]))
 
 (defn select-of-count [rg K]
   (->> rg
@@ -94,11 +92,11 @@
        y
        z))))
 
-(defn solve3
-  ([K] (solve3 [(last data/prime-seed) []] ;; result ~> [sum [primes]]
-               [[3N [3N]]] ;;current state ~> array of result
-               (apply list (map bigint (drop 2 data/prime-seed)))
-               K))
+(defn solve-min
+  ([K] (solve-min [(last data/prime-seed) []] ;; result ~> [sum [primes]]
+                  [[3 [3]]] ;;current state ~> array of result
+                  (drop 3 data/prime-seed)
+                  K))
   ([z y primes K]
    (if (empty? primes)
      [nil z]
@@ -108,24 +106,32 @@
        (if (or (> p min-sum) (empty? y0))
          [p z]
          (let [y1 (->> y0
-                      (map (partial join-if-family p))
-                      (group-by #(= K (count (second %)))))
-              z1 (select-min z (y1 true))]
+                       (mapcat (partial join-if-family p))
+                       (group-by #(= K (count (second %)))))
+               z1 (select-min z (y1 true))]
            (recur z1 (conj (or (y1 false) []) [p [p]]) (next primes) K)))))))
 
 (t/deftest solve3-test
   (t/is (= [113N [119N [3N 7N 109N]]] (solve3 3))))
 
-;;=> ([5381N 5507N 7877N 41621N 47237N])
-;; (reduce + [5381N 5507N 7877N 41621N 47237N])
-;; (solve)
-;; 129976621N
-;; (map prime/is-prime? [3 7 109 673 129976621])
-;; (in-family? [3 7 109 673] 3)
-;; (reduce + [3 7 109 673 129976621N])
-;; (find-next-prime prime-seed (last prime-seed))
-;; (prime? prime-inf 15)
-;; (->> (map #(vector (= %1 %2) %1 %2)
-;;       (take 1200 prime-inf)
-;;       (take 1200 data/prime-seed))
-;;      (filter #(not (first %))))
+(defn solve-many
+  ([K N] (solve-many [] ;; result ~> [sum [primes]]
+               [[3 [3]]] ;;current state ~> array of result
+               (drop 3 data/prime-seed)
+               K N))
+  ([z y primes K N]
+   (if (empty? primes)
+     [nil z]
+     (let [p (first primes)]
+       (if (= N (count z))
+         [p
+          (count y)
+          (sort-by #(first %) z)]
+         (let [y1 (->> y
+                       (mapcat (partial join-if-family p))
+                       (group-by #(= K (count (second %)))))
+               z1 (into [] (concat z (y1 true)))
+               y2 (conj (or (y1 false) []) [p [p]])]
+           (recur z1 y2 (next primes) K N)))))))
+
+(time (println (reduce + (solve-min 5))))
