@@ -27,22 +27,7 @@
 ;; (def test-prime-seed (def-prime-seed [2 3 5 7 11]))
 (def test-prime-seed (def-prime-seed (subvec data/prime-seed 0 500)))
 
-(defn prime-div?
-  ;;https://projecteuler.net/overview=007
-  ([n] (prime-div? 5 n))
-  ([start n]
-   (cond
-     (= n 1) false
-     (< n 4) true
-     (= 0 (mod n 2)) false
-     (< n 9) true
-     (= 0 (mod n 3)) false
-     :else (let [q (Math/sqrt n)]
-             (loop [f start]
-               (cond (> f q) true
-                     (= 0 (mod n f)) false
-                     (= 0 (mod n (+ 2 f))) false
-                     :else (recur (+ 6 f))))))))
+
 
 (defn lsqrt [n]
   (long (Math/sqrt n)))

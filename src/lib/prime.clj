@@ -158,3 +158,27 @@
                     (if (= nil (loop-j-mr x n s))
                       (recur (rest ra))
                       false))))))))
+
+(defn prime-loop [S body]
+  (loop [p S]
+    (cond
+      (and (prime-mr? p) (body p)) p
+      (and (prime-mr? (+ 2 p)) (body (+ 2 p))) (+ 2 p)
+      :else (recur (+ 6 p)))))
+
+(defn prime-div?
+  ;;https://projecteuler.net/overview=007
+  ([n] (prime-div? 5 n))
+  ([start n]
+   (cond
+     (= n 1) false
+     (< n 4) true
+     (= 0 (mod n 2)) false
+     (< n 9) true
+     (= 0 (mod n 3)) false
+     :else (let [q (long (Math/sqrt n))]
+             (loop [f start]
+               (cond (> f q) true
+                     (= 0 (mod n f)) false
+                     (= 0 (mod n (+ 2 f))) false
+                     :else (recur (+ 6 f))))))))
