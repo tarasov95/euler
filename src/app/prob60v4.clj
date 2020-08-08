@@ -38,15 +38,6 @@
 ;; (def check-prime prime/prime-div?)
 ;; (defn check-prime [n] (prime-seed? data/prime-seed n))
 
-(defn in-family? [rg p]
-  (not (transduce
-        (comp
-         (filter #(not
-                   (and (check-prime (cat-right % p))
-                        (check-prime (cat-left % p)))))
-         (take 1))
-        sq/transduce-and rg)))
-
 (defn kissing? [p1 p2]
   (and (check-prime (cat-right p1 p2))
        (check-prime (cat-left p1 p2))))
@@ -80,9 +71,9 @@
                     (if (clique? K g v1 v2)
                       (conj w (into (sorted-set) (concat v1 v2)))
                       w))
-                  (loop-j [i]
+                  (loop-j [i z]
                     (loop [j (inc i)
-                           w []]
+                           w z]
                       (if (= j cnt)
                         w
                         (recur (inc j) (next-w w (rk i) (rk j))))))]
@@ -90,7 +81,7 @@
                    z []]
               (if (= i cnt)
                 z
-                (recur (inc i) (into [] (concat z (loop-j i))))))))))
+                (recur (inc i) (loop-j i z))))))))
 
 (defn clique
   ([N K] (let [z (into [] (list-all-kissing-pairs N))
@@ -101,4 +92,5 @@
      z
      (recur (clique-step z g (inc ix)) g (inc ix) K))))
 
-(time (println (take 10 (clique 1150 5))))
+;; (time (println (take 10 (clique 1150 5))))
+;; (time (println (take 10 (clique 250 4))))
