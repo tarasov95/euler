@@ -47,26 +47,20 @@
      (->> (group-by first rp)
           (reduce-kv array-of-adjacent-v {})))))
 
-;; (let [e (map-of-edges)]
-;;   ;; (take 10 e)
-;;   (map e [ 8128, 2882, 8281 ])
-;;   )
-
-(defn find-loops
+(defn find-loops-from-point
   ([moe max-loop-len from-v] (find-loops [] [] moe max-loop-len from-v))
   ([z y moe N v]
-   (if (= v (first y))
+   (if (and (= v (first y)) (= N (count y)))
      (conj z (conj y v))
      (if (> (count y) N)
        z
        (let [v-next (moe v)
              y-next (conj y v)]
          (->> v-next
-              (mapcat (partial find-loops z y-next moe N))))))))
+              (mapcat (partial find-loops-from-point z y-next moe N))))))))
 
-(let [moe (map-of-edges)]
+(defn find-all-loops [moe max-loop-len]
   (->> (map first moe)
-       (mapcat (partial find-loops moe 4))
-       (filter #(= 4 (count %)))
-       ;; (reduce concat)
-       ))
+       (mapcat (partial find-loops moe max-loop-len))))
+
+(find-all-loops (map-of-edges) 3)
