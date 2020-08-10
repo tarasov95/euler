@@ -3,9 +3,6 @@
             [clojure.test :as t]
             [lib.numb :as numb]))
 
-
-
-
 ;;10^N ~> N+1 digits
 ;;9^N ~> N digits, but only until N gets sufficiently large ~> N-k digits
 ;; for every base below 9 it's the same as for 9 only stops faster
