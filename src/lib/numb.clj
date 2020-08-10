@@ -120,10 +120,13 @@
       (+ (* 10 k) (mod n 10))
       (quot n 10)))))
 
-(defn reverse
-  ([n] (reverse 0 n))
+(defn backward
+  ([n] (backward 0 n))
   ([z n]
    (if (= 0 n)
      z
      (recur (+ (* 10 z) (mod n 10))
             (quot n 10)))))
+
+(defmacro lsqrt [n]
+  `(long (Math/sqrt ~n)))

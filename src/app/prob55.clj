@@ -7,10 +7,10 @@
 
 (defn Lychrel? [n]
   (loop [ix 1
-         z (+ n (numb/reverse n))]
+         z (+ n (numb/backward n))]
     (cond (> ix 50) true
           (numb/palindrome? z) false
-          :else (recur (inc ix) (+ z (numb/reverse z))))))
+          :else (recur (inc ix) (+ z (numb/backward z))))))
 
 (t/deftest Lychrel?-test
   (t/is (Lychrel? 196N))
