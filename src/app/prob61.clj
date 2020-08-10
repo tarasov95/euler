@@ -10,6 +10,7 @@
 ;; Find the sum of the only ordered set of six cyclic 4-digit numbers for which each polygonal type: triangle, square, pentagonal, hexagonal, heptagonal, and octagonal, is represented by a different number in the set.
 
 ;; (take-while #(< (second %) 1000) (map #(vector % (P5 %)) (range 1 1000)))
+
 (defn p-range [fn-p fn-index]
   (map fn-p (range (inc (long (fn-index 1000))) (long (fn-index 10000)))))
 
@@ -29,14 +30,36 @@
   (concat (tail2head-pairs r1 r2)
           (tail2head-pairs r2 r1)))
 
+;; (defn all-t2h-pairs []
+;;   (let [r3 (p-range pn/p3 pn/p3-index)
+;;         r4 (p-range pn/p4 pn/p4-index)
+;;         r5 (p-range pn/p5 pn/p5-index)]
+;;     (concat
+;;      (tail2head-perm r3 r4)
+;;      (tail2head-perm r3 r5)
+;;      (tail2head-perm r4 r5))))
+
+(defmacro gen-t2h-pairs [S E]
+  (let [ix (range S (inc E))
+        v (into [] (map #(gensym (str "r" % "_")) ix))
+        h (mapcat (fn [ix v] `(~v (p-range ~(symbol (str "pn/p" ix)) ~(symbol (str "pn/p" ix "-index"))))) ix v)
+        b (for [l (range 0 (inc (- E S)))
+                r (range 0 (inc (- E S)))
+                :when (> r l)]
+            `(tail2head-perm ~(v l) ~(v r)))]
+    `(let [~@h]
+       (concat ~@b))))
+
 (defn all-t2h-pairs []
-  (let [r3 (p-range pn/p3 pn/p3-index)
-        r4 (p-range pn/p4 pn/p4-index)
-        r5 (p-range pn/p5 pn/p5-index)]
-    (concat
-     (tail2head-perm r3 r4)
-     (tail2head-perm r3 r5)
-     (tail2head-perm r4 r5))))
+  (gen-t2h-pairs 3 8))
+
+(defmacro gen-pn-test [S E x]
+  (let [ix (range S (inc E))
+        h (mapcat (fn [ix] `(~(keyword (str "p" ix)) (~(symbol (str "pn/p" ix "?")) ~x))) ix)]
+    `(~@h)))
+
+(defn test-loop [l]
+  (gen-pn-test 3 8 l))
 
 (defn map-of-edges
   ([] (map-of-edges (all-t2h-pairs)))
@@ -63,4 +86,13 @@
   (->> (map first moe)
        (mapcat (partial find-loops moe max-loop-len))))
 
-(find-all-loops (map-of-edges) 3)
+(let [lp (take 3 (find-all-loops (map-of-edges) 6))]
+  (list lp
+        ;; (map #(map test-loop %) lp)
+        ))
+;; (map test-loop [7740 4095 9517 1717 1711 1177 7740])
+;; (test-loop 7740)
+;; (time (println (take 10 (find-all-loops (map-of-edges) 6))))
+
+
+(macroexpand-1 '(gen-pn-test 3 8 x))
