@@ -2,6 +2,10 @@
   (:require [clojure.test :as t]
             [lib.numb :as numb]))
 
+;; https://projecteuler.net/best_posts=061
+;; BTW, the common formula for figure numbers:
+;; p(k, n) = n * (2 + (k-2)*(n-1)) /2;
+
 (defn p3 [n]
   (/ (* n (inc n)) 2))
 

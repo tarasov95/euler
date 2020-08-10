@@ -11,8 +11,8 @@
 
 ;; (take-while #(< (second %) 1000) (map #(vector % (P5 %)) (range 1 1000)))
 
-(defn p-range [fn-p fn-index]
-  (map fn-p (range (inc (long (fn-index 1000))) (long (fn-index 10000)))))
+(defn p-range [pn fn-p fn-index]
+  (map (fn [e] {:n (fn-p e) :p pn}) (range (inc (long (fn-index 1000))) (long (fn-index 10000)))))
 
 (defn l2d [n]
   (mod n 100))
@@ -23,7 +23,7 @@
 (defn tail2head-pairs [r1 r2]
   (for [x1 r1
         x2 r2
-        :when (= (l2d x1) (f2d x2))]
+        :when (= (l2d (:n x1)) (f2d (:n x2)))]
     [x1 x2]))
 
 (defn tail2head-perm [r1 r2]
@@ -42,7 +42,7 @@
 (defmacro gen-t2h-pairs [S E]
   (let [ix (range S (inc E))
         v (into [] (map #(gensym (str "r" % "_")) ix))
-        h (mapcat (fn [ix v] `(~v (p-range ~(symbol (str "pn/p" ix)) ~(symbol (str "pn/p" ix "-index"))))) ix v)
+        h (mapcat (fn [ix v] `(~v (p-range ~ix ~(symbol (str "pn/p" ix)) ~(symbol (str "pn/p" ix "-index"))))) ix v)
         b (for [l (range 0 (inc (- E S)))
                 r (range 0 (inc (- E S)))
                 :when (> r l)]
@@ -50,49 +50,39 @@
     `(let [~@h]
        (concat ~@b))))
 
-(defn all-t2h-pairs []
-  (gen-t2h-pairs 3 8))
-
-(defmacro gen-pn-test [S E x]
-  (let [ix (range S (inc E))
-        h (mapcat (fn [ix] `(~(keyword (str "p" ix)) (~(symbol (str "pn/p" ix "?")) ~x))) ix)]
-    `(~@h)))
-
-(defn test-loop [l]
-  (gen-pn-test 3 8 l))
-
-(defn map-of-edges
-  ([] (map-of-edges (all-t2h-pairs)))
-  ([rp]
-   (letfn [(array-of-adjacent-v [z v r]
-             (assoc z v
-                    (into [] (apply concat (map rest r)))))]
-     (->> (group-by first rp)
-          (reduce-kv array-of-adjacent-v {})))))
+(defn map-of-edges [rp]
+  (letfn [(array-of-adjacent-v [z v r]
+            (assoc z v
+                   (into [] (apply concat (map rest r)))))]
+    (->> (group-by first rp)
+         (reduce-kv array-of-adjacent-v {}))))
 
 (defn find-loops-from-point
-  ([moe max-loop-len from-v] (find-loops [] [] moe max-loop-len from-v))
+  ([moe max-loop-len from-v] (find-loops-from-point [] [] moe max-loop-len from-v))
   ([z y moe N v]
    (if (and (= v (first y)) (= N (count y)))
      (conj z (conj y v))
      (if (> (count y) N)
        z
        (let [v-next (moe v)
-             y-next (conj y v)]
+             y-next (conj y v)
+             cnt-y (= N (count y-next))
+             fst-v (first y-next)
+             flt (fn [e] (or (not-any? #(= (:p %) (:p e)) y-next)
+                             (and cnt-y (= fst-v e))))]
          (->> v-next
+              (filter flt)
               (mapcat (partial find-loops-from-point z y-next moe N))))))))
 
 (defn find-all-loops [moe max-loop-len]
   (->> (map first moe)
-       (mapcat (partial find-loops moe max-loop-len))))
-
-(let [lp (take 3 (find-all-loops (map-of-edges) 6))]
-  (list lp
-        ;; (map #(map test-loop %) lp)
-        ))
-;; (map test-loop [7740 4095 9517 1717 1711 1177 7740])
-;; (test-loop 7740)
-;; (time (println (take 10 (find-all-loops (map-of-edges) 6))))
+       (mapcat (partial find-loops-from-point moe max-loop-len))))
 
 
-(macroexpand-1 '(gen-pn-test 3 8 x))
+(defn solve []
+  (->> (find-all-loops (map-of-edges (gen-t2h-pairs 3 8)) 6)
+       (map butlast)
+       (map (partial map :n))
+       (map (partial reduce +))))
+
+(time (println (solve)))
