@@ -16,21 +16,41 @@
         lenn (if (or (= -1 ixn) (= 2 ixn)) (inc len) len)]
     [an mn dn S a0 lenn ixn]))
 
-(defn intl-seq [S]
-  (->> (iterate next-a [(numb/lsqrt S) 0 1 S (numb/lsqrt S) 0 1])
-       (take-while (fn [r] (<= (last r) 2)))))
+(defn intl-seq [S fn-select]
+  (into []
+        (comp (take-while (fn [r] (<= (last r) 2)))
+              fn-select)
+        (iterate next-a [(numb/lsqrt S) 0 1 S (numb/lsqrt S) 0 1])))
 
 (defn a-seq [S]
-  (map first (intl-seq S)))
+  (intl-seq S (map first)))
+
+(t/deftest a-seq-test
+  (t/is [1 2 2 2] (a-seq 2)))
 
 (defn period [S]
-  (last (butlast (last (intl-seq S)))))
+  (->> (intl-seq S (map (comp last butlast))) ;;take len, which is 2nd from the end
+       (last))) ;;of the very last item
 
-(defn list-fractions [N]
-  (->> (range 2 (inc N))
-       (filter #(-> %  Math/sqrt numb/natural? not))
-       (map period)
-       (filter odd?)))
+(t/deftest period-test
+  (t/is 5 (period 13)))
 
-(time (count (list-fractions 10000)))
+(defn list-fractions [N fn-select]
+  (sequence
+   (comp
+    (filter #(-> %  Math/sqrt numb/natural? not))
+    fn-select)
+   (range 2 (inc N))))
+
+(t/deftest list-fractions-test
+  (t/is [1 2 2 2] (first (list-fractions 2 (map a-seq)))))
+
+(t/deftest solve
+  (t/is 1322
+        (time
+         (count
+          (list-fractions 10000
+                          (comp (map period)
+                                (filter odd?)))))))
+
 
