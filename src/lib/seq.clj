@@ -1,4 +1,5 @@
-(ns lib.seq)
+(ns lib.seq
+  (:require [clojure.test :as t]))
 
 (defn conj-each [col e]
   (map #(conj % e)
@@ -29,3 +30,15 @@
          (= nil b1) b2
          (= nil b2) b1
          :else (and b1 b2))))
+
+(defn match-len
+  ([rg1 rg2] (match-len 0 rg1 rg2))
+  ([z rg1 rg2]
+   (cond
+     (or (empty? rg1) (empty? rg2)) z
+     (= (first rg1) (first rg2)) (recur (inc z) (rest rg1) (rest rg2))
+     :else z)))
+
+(t/deftest match-len-test
+  (t/is (= 2 (match-len [1 2 3 4] [1 2 5 7 8]))))
+
