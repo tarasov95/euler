@@ -1,4 +1,4 @@
-(ns app.prob68
+(ns app.prob69
   (:require [clojure.test :as t]
             [lib.prime :as prime]
             [lib.numb :as numb]))
