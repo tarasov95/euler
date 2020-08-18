@@ -36,7 +36,7 @@
 (defn phi [n]
   (* n (P n)))
 
-(def N 1000000)
+(def ^:dynamic *N* 1000000)
 
 (defn append-fact [n r]
   {:n (* n (:n r)) ;;multiplication of all factors
@@ -48,11 +48,6 @@
 (defn new-rec [n]
   {:n n :f #{n} :Pn (- 1 (/ 1 n))})
 
-(defn add-next-fact [z n]
-  (->> z
-       (filter #(< (* n (:n %)) N))
-       (map (partial append-fact n))))
-
 (defn rec-phi [r]
   (* (:n r) (:Pn r)))
 
@@ -62,29 +57,54 @@
 (defn solution? [r]
   (permut? (:n r) (rec-phi r)))
 
+(defn add-next-fact [z n]
+  (->> z
+       (filter #(< (* n (:n %)) *N*))
+       (map (partial append-fact n))))
+
+(defn add-next-fact-loop [z n]
+  ;; (println n)
+  (loop [y (conj z (new-rec n))
+         rg y]
+    ;; (println rg)
+    (let [Z (filter solution? rg)]
+      (if (not-empty Z)
+        [true Z]
+        (let [rgn (add-next-fact rg n)]
+          (if (empty? rgn)
+            [false y]
+            (recur (into [] (concat y rgn))
+                   rgn)))))))
+
 (defn find-solution
-  ([] (let [rrp (reverse (prime/primes-below (inc (numb/lsqrt N))))]
-        (find-solution [] [(new-rec (first rrp))] (rest rrp))))
-  ([r z rrp]
+  ([] (let [rrp (reverse (prime/primes-below (inc (/ *N* 2))))]
+        (find-solution [] rrp)))
+  ([z rrp]
    (if (empty? rrp)
-     r
+     nil
      (let [n (first rrp)
-           y (add-next-fact z n)
-           Z (filter solution? y)]
-       (if (and false (not-empty Z))
-         Z
-         (recur (into [] (concat r Z))
-          (conj (into [] (concat z y)) (new-rec n))
-               (rest rrp)))))))
+           y (add-next-fact-loop z n)]
+       (if (first y)
+         (second y)
+         (recur (second y)
+                (rest rrp)))))))
 
 
 (comment (->> (find-solution)
       (map #(vector (/ (float (:n %)) (* (:n %) (:Pn %))) (* (:n %) (:Pn %)) %))
       (sort-by first)))
 
-(->> (range 2 N)
-     (map #(vector % (phi %)))
-     (map #(conj % (/ (first %) (second %))))
-     (filter #(permut? (first %) (second %)))
-     (sort-by last)
-     (take 8))
+(defn sample [N]
+  (->> (range 2 N)
+      (map #(vector % (phi %)))
+      (map #(conj % (/ (float (first %)) (second %))))
+      (filter #(permut? (first %) (second %)))
+      (sort-by last)
+      (first)))
+
+(binding [*N* 10000]
+  (list (sample *N*)
+        (find-solution)))
+
+;; (binding [*N* 1000]
+;;   (add-next-fact-loop (second (add-next-fact-loop [] 
