@@ -1,6 +1,7 @@
 (ns app.prob70
   (:require [clojure.test :as t]
             [lib.prime :as prime]
+            [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
             [lib.numb :as numb]))
 
 ;; https://projecteuler.net/problem=70
@@ -39,11 +40,12 @@
 (def ^:dynamic *N* 1000000)
 
 (defn append-fact [n r]
-  {:n (* n (:n r)) ;;multiplication of all factors
-   :f (conj (:f r) n) ;;set of distinct factors
-   :Pn (if ((:f r) n) ;; Pn ~> P(1-1/p) of all distinct factors
-         (:Pn r)
-         (* (- 1 (/ 1 n)) (:Pn r)))})
+  (p :append-fact-body
+     {:n (* n (:n r)) ;;multiplication of all factors
+      :f (conj (:f r) n) ;;set of distinct factors
+      :Pn (if ((:f r) n) ;; Pn ~> P(1-1/p) of all distinct factors
+            (:Pn r)
+            (* (- 1 (/ 1 n)) (:Pn r)))}))
 
 (defn new-rec [n]
   {:n n :f #{n} :Pn (- 1 (/ 1 n))})
@@ -55,44 +57,50 @@
   (t/is (= (phi 6) (rec-phi (append-fact 3 (new-rec 2)))))) ;;(phi 6)
 
 (defn solution? [r]
-  (permut? (:n r) (rec-phi r)))
+  (p :solution?-body
+     (permut? (:n r) (rec-phi r))))
 
-(defn add-next-fact [z n]
-  (->> z
-       (filter #(< (* n (:n %)) *N*))
-       (map (partial append-fact n))))
+;; (defn add-next-fact [z n]
+;;   (p :add-next-fact-body
+;;      (->> z
+;;           (filter #(< (* n (:n %)) *N*))
+;;           (map #(append-fact n %)))))
+
+(defn add-next-fact [a n]
+  (p :add-next-fact-body
+     (loop [z (list)
+            rg a]
+       (let [r (first rg)]
+         (cond
+          (empty? rg) z
+          (< (* n (:n r)) *N*) (recur (conj z (append-fact n r)) (rest rg))
+          :else (recur z (rest rg)))))))
 
 (defn add-next-fact-loop [z n]
-  ;; (println n)
-  (loop [y (conj z (new-rec n))
-         rg y]
-    ;; (println rg)
-    (let [Z (filter solution? rg)]
-      (if (not-empty Z)
-        [true Z]
-        (let [rgn (add-next-fact rg n)]
-          (if (empty? rgn)
-            [false y]
-            (recur (into [] (concat y rgn))
-                   rgn)))))))
+  (let [rec (new-rec n)]
+    (if (solution? rec)
+      [true [rec]]
+      (let [rgn (add-next-fact z n)
+            Z (filter solution? rgn)]
+        (cond
+          (p :empty?-z (empty? z)) [false [rec]]
+          (p :empty?-rgn (empty? rgn)) [false (p :conj-rec (conj z rec))]
+          (p :not-empty-Z (not-empty Z)) [true Z]
+          :else [false (p :conj-else (conj (into (list) (concat z rgn)) rec))])))))
 
 (defn find-solution
-  ([] (let [rrp (reverse (prime/primes-below (inc (/ *N* 2))))]
-        (find-solution [] rrp)))
+  ([] (let [rrp (p :prime-seed (into (list) (prime/primes-below (inc (/ *N* 2)))))] ;;into list reverses the seq
+        (find-solution (list) rrp)))
   ([z rrp]
    (if (empty? rrp)
      nil
      (let [n (first rrp)
            y (add-next-fact-loop z n)]
        (if (first y)
-         (second y)
+         [(second y) (count z) (take 10 z)]
          (recur (second y)
                 (rest rrp)))))))
 
-
-(comment (->> (find-solution)
-      (map #(vector (/ (float (:n %)) (* (:n %) (:Pn %))) (* (:n %) (:Pn %)) %))
-      (sort-by first)))
 
 (defn sample [N]
   (->> (range 2 N)
@@ -102,9 +110,11 @@
       (sort-by last)
       (first)))
 
-(binding [*N* 10000]
-  (list (sample *N*)
-        (find-solution)))
 
-;; (binding [*N* 1000]
-;;   (add-next-fact-loop (second (add-next-fact-loop [] 
+(tufte/add-basic-println-handler! {})
+(profile
+ {}
+ (binding [*N* 100000]
+   ;; (time (println "sample" (sample *N*)))
+   (time (println "find-solution" (find-solution)))))
+
