@@ -41,9 +41,6 @@
 (defn phi [n]
   (* n (P n)))
 
-(t/deftest rec-phi-test
-  (t/is (= (phi 6) (rec-phi (append-fact 3 (new-rec 2)))))) ;;(phi 6)
-
 (defn fac2pow
   [n p]
   (loop [pow 0 ;;power of the factor
@@ -51,7 +48,7 @@
          cur n]
     (cond
       (> pow 1) nil
-      (= 0 (mod cur p)) (recur (inc pow) (* ppow p) (quot cur p))
+      (= 0 (rem cur p)) (recur (inc pow) (* ppow p) (quot cur p))
       :else ppow)))
 
 (defn pfact
