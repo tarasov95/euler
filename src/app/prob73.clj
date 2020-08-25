@@ -62,31 +62,15 @@
   (t/is (= (last (F32 8))
            [3/8, 2/5, 3/7])))
 
-(comment (defn reduce-F [n fun val]
-   (loop [p1 (rat 0/1)
-          p2 (rat (/ 1 n))
-          z (fun val p2)]
-     (let [a (numerator p1)
-           b (denominator p1)
-           c (numerator p2)
-           d (denominator p2)
-           pn (/ (long (- (* (Math/floor (/ (+ n b) d)) c) a))
-                 (long (- (* (Math/floor (/ (+ n b) d)) d) b)))]
-       (if (< pn 1)
-         (let [zn (fun z pn)]
-           (if (reduced? zn)
-             z
-             (recur p2 pn zn)))
-         z)))))
-
 (defn reduce-F [n fun val]
   (loop [a 0
          b 1
          c 1
          d n
          z (fun val (/ c d))]
-    (let [p (long (- (* (Math/floor (/ (+ n b) d)) c) a))
-          q (long (- (* (Math/floor (/ (+ n b) d)) d) b))]
+    (let [f (long (Math/floor (/ (+ n b) d)))
+          p (- (* f c) a)
+          q (- (* f d) b)]
       (if (= p q)
         z
         (let [zn (fun z (/ p q))]
@@ -107,4 +91,5 @@
 (t/deftest count23-test
   (t/is (= (count [3/8, 2/5, 3/7]) (reduce-F 8 count23 0))))
 
-(time (reduce-F 12000 count23 0))
+(t/deftest solve
+  (t/is (= 7295372 (time (reduce-F 12000 count23 0)))))
