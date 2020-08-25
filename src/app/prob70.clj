@@ -127,4 +127,4 @@
       ;; (map (fn [rg] (future (find-in-range rg))))
        (reduce brute-search-min)))
 
-(time (println "psolve" (psolve)))
+;; (time (println "psolve" (psolve)))

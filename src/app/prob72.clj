@@ -40,4 +40,4 @@
 (defn solve []
   (- (long (norm-recur (long 1e6))) 2))
 
-(time (println (solve)))
+;; (time (println (solve)))
