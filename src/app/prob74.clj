@@ -67,8 +67,20 @@
                           (filter (partial = 60))
                           (count))))))
 
-;; 999 999
-(comment (for [a (range 1 10)
-       b (range 0 10)
-       :when (>= a b)]
-   (+ (* 10 a) b)))
+(defn reduce-fact-chain [n fun val]
+  (loop [hs #{n}
+         nn (fact-numb n)
+         z  val]
+    (if (hs nn)
+      z
+      (recur (conj hs nn)
+             (fact-numb nn)
+             (fun z nn)))))
+
+;;a cached cycle record can be used to calculate actual length of the cycle, but it can be used to cut off candidates by the max length of the cycle
+;; 
+
+(t/deftest reduce-fact-chain-test
+  (t/is (= [69 363600 1454 169 363601] (reduce-fact-chain 69 conj [69])))
+  (t/is (= [916 363601 1454 169] (reduce-fact-chain 916 conj [916])))
+  (t/is (= [169 363601 1454] (reduce-fact-chain 169 conj [169]))))
