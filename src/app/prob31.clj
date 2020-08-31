@@ -35,8 +35,9 @@
          (filter not-empty)
          (reduce concat))))
 
-(let [coins  [1 2 5 10 20 50 100 200]
-      amount 200]
-  (time (pmap identity
-              [(time (count (change amount coins)))
-               (time (count (pchange amount coins)))])))
+(defn solve []
+  (let [coins  [1 2 5 10 20 50 100 200]
+        amount 200]
+    (time (pmap identity
+                [(time (count (change amount coins)))
+                 (time (count (pchange amount coins)))]))))
