@@ -1,9 +1,18 @@
 (ns lib.seq
   (:require [clojure.test :as t]))
 
+(defn each [fun e col]
+  (map #(fun % e)
+       col))
+
 (defn conj-each [col e]
   (map #(conj % e)
        col))
+
+(defn if-conj [coll el]
+  (if (nil? el)
+    coll
+    (conj coll el)))
 
 (defn permut [rg]
   (if (empty? (rest rg))

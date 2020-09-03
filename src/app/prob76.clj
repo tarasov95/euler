@@ -20,3 +20,16 @@
 
 (t/deftest solve
   (t/is (= 190569291 (time (count-sums 100 99)))))
+
+(def count-sums2
+  "https://projecteuler.net/overview=031"
+  (memoize
+   (fn [N c]
+     (cond
+       (or (= 1 N) (= 1 c)) 1
+       (and (> c 1) (< N c)) (count-sums2 N (dec c))
+       (and (> c 1) (>= N c)) (+ (count-sums2 N (dec c))
+                                 (count-sums2 (- N c) c))))))
+
+(t/deftest solve2
+  (t/is (= 190569291 (time (count-sums2 100 99)))))
