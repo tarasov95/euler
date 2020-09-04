@@ -30,26 +30,39 @@
   (t/is (= [2 2 2 2] (change-one 8 2)))
   (t/is (= nil (change-one 8 3))))
 
-(defn spy [v]
-  (println v)
-  v)
-
 (defn prime-ways
   ([n] (prime-ways [] n (prime/primes-below (- n 2))))
   ([z n rp]
    ;; (println z n rp)
-   (if (empty? (rest rp))
-     (sq/if-conj z (change-one n (first rp)))
-     (let [fp (first rp)
-           rpn (rest rp)]
-       (into []
-             (->> (range 0 (quot n fp))
-                  (mapcat #(sq/each concat
-                                    (repeat % fp)
-                                    (prime-ways [] (- n (* % fp)) rpn)))
-                  (concat (prime-ways [] n [fp]))
-                  (concat z)))))))
+   (cond
+     (< n 2) z
+     (empty? (rest rp)) (sq/if-conj z (change-one n (first rp)))
+     :else (let [fp (first rp)
+                 rpn (rest rp)]
+             (into []
+                   (->> (range 0 (quot n fp))
+                        (mapcat #(sq/each concat
+                                          (repeat % fp)
+                                          (prime-ways [] (- n (* % fp)) rpn)))
+                        (concat (prime-ways [] n [fp]))
+                        (concat z)))))))
 
 (t/deftest prime-ways-test
   (t/is (= 5 (count (prime-ways 10)))))
 
+(defn pways-count
+  ([n] (pways-count n (prime/primes-below (- n 2))))
+  ([n rp]
+   (let [fp (first rp)
+         rpn (rest rp)]
+     (cond
+       (= 0 (quot n fp)) 0
+       (>= fp n) (if (zero? (mod n fp)) 1 0)
+       (empty? rpn) (if (zero? (mod n fp)) 1 0)
+       :else (+ (pways-count n [fp])
+                (->> (range 0 (quot n fp))
+                     (map #(pways-count (- n (* % fp)) rpn))
+                     (reduce +)))))))
+
+(t/deftest pways-count-test
+  (t/is (= 5 (pways-count 10))))
