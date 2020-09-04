@@ -42,14 +42,14 @@
      (sq/if-conj z (change-one n (first rp)))
      (let [fp (first rp)
            rpn (rest rp)]
-       (sq/if-conj
-        (into []
-              (->> (range 0 (quot n fp))
-                   (mapcat #(sq/each concat
-                                     (repeat % fp)
-                                     (prime-ways [] (- n (* % fp)) rpn)))
-                   (concat z)))
-        (change-one n fp))))))
+       (into []
+             (->> (range 0 (quot n fp))
+                  (mapcat #(sq/each concat
+                                    (repeat % fp)
+                                    (prime-ways [] (- n (* % fp)) rpn)))
+                  (concat (prime-ways [] n [fp]))
+                  (concat z)))))))
 
-(prime-ways 10)
+(t/deftest prime-ways-test
+  (t/is (= 5 (count (prime-ways 10)))))
 
