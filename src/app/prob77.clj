@@ -132,10 +132,12 @@
      (if (or (nil? p) (>= p n))
        (s [n f])
        (recur (->> (range 1 (inc n))
+                   ;;TODO: can be done with [] instead of {} since p is always the same for a given layer and % is (range 1 n+1)
                    (map #(vector [% p] (pways-next % f p s)))
                    (into {}))
               (rest rp)
               n)))))
 
-[(pways-dp 76)
- (pways2 76)]
+(t/deftest pways-dp-test
+  (t/is (= (pways2 76) (pways-dp 76))))
+
