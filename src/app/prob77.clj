@@ -66,3 +66,76 @@
 
 (t/deftest pways-count-test
   (t/is (= 5 (pways-count 10))))
+
+(defn pways-rev
+  ([n] (pways-rev n (reverse (prime/primes-below 20))))
+  ([n rp]
+   (let [fp (first rp)
+         rpn (rest rp)]
+     (cond
+       (< n 2) 0
+       ;; (= fp n) (if (zero? (mod n fp)) 1 0)
+       (empty? rpn) (if (zero? (mod n fp)) 1 0)
+       :else (+ (pways-rev n [fp])
+                (->> (range 0 (inc (quot n fp)))
+                     (map #(pways-rev (- n (* % fp)) rpn))
+                     (reduce +)))))))
+
+(defn prime-below [n]
+  (last (take-while (partial > n)
+                    prime/*prime-feed*)))
+
+(t/deftest prime-below-test
+  (t/is (= 5 (prime-below 7)))
+  (t/is (= 7 (prime-below 10))))
+
+(defn pways2
+  ([n] (pways2 n (prime-below n)))
+  ([n p]
+   (let [fp p
+         rpn (prime-below p)]
+     (cond
+       (< n 2) 0
+       (= fp 2) (if (zero? (mod n fp)) 1 0)
+       :else (+ (if (zero? (mod n fp)) 1 0)
+                (->> (range 0 (inc (quot n fp)))
+                     (map #(pways2 (- n (* % fp)) rpn))
+                     (reduce +)))))))
+
+(t/deftest solve-recur
+  (t/is
+   (= [71 5006] (->> (drop 10 (range))
+                     (map #(vector % (pways2 %)))
+                     (filter #(>= (second %) 5000))
+                     (first)))))
+
+(defn init-dps [n]
+  (->> (range 2 (inc n) 2)
+       (reduce (fn [z e] (assoc z [e 2]
+                                (if (even? e) 1 0))) {})))
+
+(t/deftest init-dps-test
+  (t/is (= {[2 2] 1, [4 2] 1}
+           (init-dps 5))))
+
+(defn ^:private pways-next [n f p s]
+  (+ (if (zero? (mod n p)) 1 0)
+     (->> (range n 0 (- p))
+          (map #(or (s [% f]) 0))
+          (reduce +))))
+
+(defn pways-dp
+  ([n] (pways-dp (init-dps n) (prime/primes-below n) n))
+  ([s rp n]
+   (let [f (first rp)
+         p (second rp)]
+     (if (or (nil? p) (>= p n))
+       (s [n f])
+       (recur (->> (range 1 (inc n))
+                   (map #(vector [% p] (pways-next % f p s)))
+                   (into {}))
+              (rest rp)
+              n)))))
+
+[(pways-dp 76)
+ (pways2 76)]
