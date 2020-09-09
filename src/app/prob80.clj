@@ -49,7 +49,7 @@
     (let [excl (into #{} (list-squares-below 100))]
       (->> (range 1 101)
            (filter #(not (excl %)))
-           (map #(vector % (with-precision P (sqrtn (bigdec %)))))
+           (map #(vector % (with-precision P (sqrtn (bigdec %))))) ;;keep the source data for debugging purposes
            (map #(conj % (reduce + (to-dig 100 (second %)))))
            (map last)
            (reduce +)))))
