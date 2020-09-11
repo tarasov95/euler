@@ -61,7 +61,6 @@
   ([m] (bfs-path []
                  (vector [(path-step m 0 0)]) m))
   ([z s m]
-   (println (map (partial map :w) s))
    (if (empty? s)
      z
      (let [c (first s)]
@@ -78,4 +77,3 @@
               (sort-by (partial reduce +))
               (first)))))
 
-(first (bfs-path M0))
