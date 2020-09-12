@@ -14,6 +14,9 @@
     coll
     (conj coll el)))
 
+(defn conj-if [coll & xs]
+  (reduce conj coll (filter (comp not nil?) xs)))
+
 (defn permut [rg]
   (if (empty? (rest rg))
     (list rg)

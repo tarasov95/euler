@@ -3,7 +3,6 @@
             [lib.seq :as sq]
             [clojure.spec.alpha :as c]
             [clojure.pprint :as pp]
-            [clojure.string :as s]
             [lib.numb :as numb]))
 
 ;; https://projecteuler.net/problem=81
@@ -26,8 +25,7 @@
 (defn el [m row col]
   ((m row) col))
 
-(defn conj-if [coll & xs]
-  (reduce conj coll (filter (comp not nil?) xs)))
+(def conj-if sq/conj-if)
 
 (defn if-goal [m p]
   (let [N (dec (count m))
@@ -93,8 +91,8 @@
                     x1 (inc x)
                     y1 (inc y)]
                 (conj-if
-                 (conj-if z (when (< x1 M) {:v1 [x y] :v2 [x1 y] :w (el m x1 y)}))
-                 (when (< y1 M) {:v1 [x y] :v2 [x y1] :w (el m x y1)}))))]
+                 (conj-if z (when (< x1 M) {:v1 [y x] :v2 [y x1] :w (el m y x1)}))
+                 (when (< y1 M) {:v1 [y x] :v2 [y1 x] :w (el m y1 x)}))))]
       (->> (for [x (range 0 M)
                  y (range 0 M)]
              [x y])
@@ -104,7 +102,7 @@
   (t/is (= 40 (count (edges M0)))))
 
 (defmacro dist [d v]
-  `(or (~d ~v) ~(Long/MAX_VALUE)))
+  `(or (~d ~v) ~(Integer/MAX_VALUE)))
 
 (defmacro inc-meta-ver [obj]
   `(let [m# (meta ~obj)]
@@ -117,24 +115,25 @@
       (inc-meta-ver (assoc dst v2 dn))
       dst)))
 
-(defn BellmanFord [m]
-  (let [edg (edges m)
-        dst (assoc {} [0 0] (el m 0 0))]
-    (loop [z (with-meta dst {:ver 1})]
-      (let [zn (reduce update-dist z edg)]
-        (if (= (meta zn) (meta z))
-          z
-          (recur zn))))))
+(defn BellmanFord
+  ([m edg] (BellmanFord m edg [0 0]))
+  ([m edg v-start]
+   (let [dst (assoc {} v-start (apply el m v-start))]
+     (loop [z (with-meta dst {:ver 1})]
+       (let [zn (reduce update-dist z edg)]
+         (if (= (meta zn) (meta z))
+           z
+           (recur zn)))))))
 
 (defn solve [m]
   (let [M (dec (count m))]
-    ((BellmanFord m) [M M])))
+    ((BellmanFord m (edges m)) [M M])))
 
 (t/deftest solve-test
   (t/is (= 2427 (solve M0))))
 
-(defn load-data []
-  (let [data (slurp "resources/p081_matrix.txt")
+(defn load-data [path]
+  (let [data (slurp path)
         r    (s/split data #"\n")
         M (count r)]
     (into []
@@ -144,5 +143,5 @@
 
 (t/deftest solve-prob81
   (t/is (= 427337
-         (let [M1 (load-data)]
-           (solve M1)))))
+           (let [M1 (load-data "resources/p081_matrix.txt")]
+             (solve M1)))))
