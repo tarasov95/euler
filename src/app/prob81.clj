@@ -2,6 +2,7 @@
   (:require [clojure.test :as t]
             [lib.seq :as sq]
             [clojure.spec.alpha :as c]
+            [clojure.pprint :as pp]
             [clojure.string :as s]
             [lib.numb :as numb]))
 
@@ -77,3 +78,71 @@
               (sort-by (partial reduce +))
               (first)))))
 
+(defn list-indexes [M]
+  (->> (bfs-path M)
+      (map #(map (fn [e] (str (:x e) (:y e))) %))
+      (map #(interpose "," %))
+      (map (partial reduce str))
+      (sort)
+      (pp/pprint)))
+
+(defn edges [m]
+  (let [M (count m)]
+    (letfn [(put [z e]
+              (let [[x y] e
+                    x1 (inc x)
+                    y1 (inc y)]
+                (conj-if
+                 (conj-if z (when (< x1 M) {:v1 [x y] :v2 [x1 y] :w (el m x1 y)}))
+                 (when (< y1 M) {:v1 [x y] :v2 [x y1] :w (el m x y1)}))))]
+      (->> (for [x (range 0 M)
+                 y (range 0 M)]
+             [x y])
+           (reduce put [])))))
+
+(t/deftest edges-test
+  (t/is (= 40 (count (edges M0)))))
+
+(defmacro dist [d v]
+  `(or (~d ~v) ~(Long/MAX_VALUE)))
+
+(defmacro inc-meta-ver [obj]
+  `(let [m# (meta ~obj)]
+     (with-meta ~obj {:ver (-> m# :ver inc)})))
+
+(defn update-dist [dst edg]
+  (let [{:keys [v1 v2 w]} edg
+        dn (+ (dist dst v1) w)]
+    (if (< dn (dist dst v2))
+      (inc-meta-ver (assoc dst v2 dn))
+      dst)))
+
+(defn BellmanFord [m]
+  (let [edg (edges m)
+        dst (assoc {} [0 0] (el m 0 0))]
+    (loop [z (with-meta dst {:ver 1})]
+      (let [zn (reduce update-dist z edg)]
+        (if (= (meta zn) (meta z))
+          z
+          (recur zn))))))
+
+(defn solve [m]
+  (let [M (dec (count m))]
+    ((BellmanFord m) [M M])))
+
+(t/deftest solve-test
+  (t/is (= 2427 (solve M0))))
+
+(defn load-data []
+  (let [data (slurp "resources/p081_matrix.txt")
+        r    (s/split data #"\n")
+        M (count r)]
+    (into []
+          (map #(into [] (map (fn [e] (read-string e)))
+                      (s/split % #",")))
+          r)))
+
+(t/deftest solve-prob81
+  (t/is (= 427337
+         (let [M1 (load-data)]
+           (solve M1)))))
