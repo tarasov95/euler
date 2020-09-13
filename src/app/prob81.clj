@@ -2,6 +2,8 @@
   (:require [clojure.test :as t]
             [lib.seq :as sq]
             [clojure.spec.alpha :as c]
+            [clojure.spec.test.alpha :as stest]
+            [clojure.string :as s]
             [clojure.pprint :as pp]
             [lib.numb :as numb]))
 
@@ -84,6 +86,23 @@
       (sort)
       (pp/pprint)))
 
+(defn is-square-matrix [m]
+  (let [M (count m)]
+    (->> m
+        (map count)
+        (every? (partial = M)))))
+
+(c/def ::vertex (c/tuple number? number?))
+(c/def ::v1 ::vertex)
+(c/def ::v2 ::vertex)
+(c/def ::w number?)
+(c/def ::edge (c/keys :req-un [::v1 ::v2 ::w]))
+(c/def ::edges (c/coll-of ::edge :kind vector?))
+(c/def ::matrix-row (c/coll-of number? :kind vector?))
+(c/def ::square-matrix (c/and
+                        (c/coll-of ::matrix-row :kind vector?)
+                        is-square-matrix))
+
 (defn edges [m]
   (let [M (count m)]
     (letfn [(put [z e]
@@ -97,6 +116,9 @@
                  y (range 0 M)]
              [x y])
            (reduce put [])))))
+
+(c/fdef edges
+  :args (c/cat :m ::square-matrix))
 
 (t/deftest edges-test
   (t/is (= 40 (count (edges M0)))))
@@ -125,9 +147,17 @@
            z
            (recur zn)))))))
 
+(c/fdef BellmanFord
+  :args (c/alt
+         :2arg (c/cat :m ::square-matrix :edg ::edges)
+         :3arg (c/cat :m ::square-matrix :edg ::edges :v-start ::vertex))
+  :ret (c/map-of ::vertex number?))
+
 (defn solve
   ([m] (solve m (edges m)))
   ([m edg]
+   (c/assert ::square-matrix m)
+   (c/assert ::edges edg)
    (let [M (dec (count m))]
      ((BellmanFord m edg) [M M]))))
 
@@ -142,6 +172,10 @@
           (map #(into [] (map (fn [e] (read-string e)))
                       (s/split % #",")))
           r)))
+
+(c/fdef load-data
+  :args string?
+  :ret ::square-matrix)
 
 (t/deftest solve-prob81
   (t/is (= 427337
