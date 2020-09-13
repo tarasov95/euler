@@ -125,9 +125,11 @@
            z
            (recur zn)))))))
 
-(defn solve [m]
-  (let [M (dec (count m))]
-    ((BellmanFord m (edges m)) [M M])))
+(defn solve
+  ([m] (solve m (edges m)))
+  ([m edg]
+   (let [M (dec (count m))]
+     ((BellmanFord m edg) [M M]))))
 
 (t/deftest solve-test
   (t/is (= 2427 (solve M0))))
