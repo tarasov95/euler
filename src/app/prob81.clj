@@ -174,7 +174,7 @@
           r)))
 
 (c/fdef load-data
-  :args string?
+  :args (c/cat :path string?)
   :ret ::square-matrix)
 
 (t/deftest solve-prob81
