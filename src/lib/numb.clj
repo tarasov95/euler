@@ -130,3 +130,9 @@
 
 (defmacro lsqrt [n]
   `(long (Math/sqrt ~n)))
+
+(defmacro sqr [n]
+  `(* ~n ~n))
+
+(defmacro cub [n]
+  `(* ~n ~n ~n))
