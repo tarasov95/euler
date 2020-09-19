@@ -5,6 +5,7 @@
             [clojure.spec.test.alpha :as stest]
             [clojure.string :as st]
             [clojure.core.matrix :as m]
+            [clojure.core.matrix.linear :as ml]
             [clojure.pprint :as pp]
             [lib.numb :as numb]))
 
@@ -215,21 +216,22 @@
    (.indexOf cells (keyword (str pref no))))
   ([cell-kwd] (.indexOf cells cell-kwd)))
 
-(defn p-CC [N CC-no]
-  (let [ix-cc (ix-cell "CC" CC-no)
-        ix-jail (ix-cell :JAIL)
-        ix-go (ix-cell :GO)
-        pbase (proll-row N ix-cc)]
-    (letfn [(p-cc [dest] (if (#{ix-jail ix-go} dest) 1/16 0))]
-      (reduce-kv
-       (fn [z k v] (conj z (+ (* v 14/16) (p-cc k))))
-       []
-       pbase))))
+(defn p-CC
+  ([N CC-no _] (p-CC N (ix-cell "CC" CC-no)))
+  ([N ix-cc]
+   (let [ix-jail (ix-cell :JAIL)
+         ix-go (ix-cell :GO)
+         pbase (proll-row N ix-cc)]
+     (letfn [(p-cc [dest] (if (#{ix-jail ix-go} dest) 1/16 0))]
+       (reduce-kv
+        (fn [z k v] (conj z (+ (* v 14/16) (p-cc k))))
+        []
+        pbase)))))
 
-(s/def ::CC-no #(> (ix-cell "CC" %) 0))
-(s/fdef p-CC
-  :args (s/cat :N :dice/no-of-sides :CC-no ::CC-no)
-  :ret (s/coll-of number? :kind vector))
+;; (s/def ::CC-no #(> (ix-cell "CC" %) 0))
+;; (s/fdef p-CC
+;;   :args (s/cat :N :dice/no-of-sides :CC-no ::CC-no)
+;;   :ret (s/coll-of number? :kind vector))
 
 (stest/instrument)
 
@@ -237,7 +239,7 @@
   (t/is
    (->> cells
         (filter #(st/starts-with? (name %) "CC"))
-        (map-indexed (fn [ix _] (p-CC 6 (inc ix))))
+        (map-indexed (fn [ix _] (p-CC 6 (inc ix) "cc-no")))
         (map (partial reduce +))
         (every? (partial = 1)))))
 
@@ -261,24 +263,68 @@
   (t/is (= :D3 (cells (ix-back (ix-cell :CH2) 3))))
   (t/is (= :CC3 (cells (ix-back (ix-cell :CH3) 3)))))
 
-(defn p-CH [N CH-no]
-  (let [ix-ch (ix-cell "CH" CH-no)
-        ix [(ix-cell :GO)
-            (ix-cell :JAIL)
-            (ix-cell :C1)
-            (ix-cell :E3)
-            (ix-cell :H2)
-            (ix-cell :R1)
-            (ix-cell (find-cell ix-ch "R"))
-            (ix-cell (find-cell ix-ch "R"))
-            (ix-cell (find-cell ix-ch "U"))
-            (ix-back ix-ch 3)]
-        pbase (proll-row N ix-ch)
-        fq (frequencies ix)]
-    (letfn [(pch [dst] (/ (or (fq dst) 0) 16))]
-      (reduce-kv (fn [z k v]
-                   (conj z (+ (* v 6/16) (pch k))))
-                 []
-                 pbase))))
+(defn p-CH
+  ([N CH-no _] (p-CH N (ix-cell "CH" CH-no)))
+  ([N ix-ch]
+   (let [ix [(ix-cell :GO)
+             (ix-cell :JAIL)
+             (ix-cell :C1)
+             (ix-cell :E3)
+             (ix-cell :H2)
+             (ix-cell :R1)
+             (ix-cell (find-cell ix-ch "R"))
+             (ix-cell (find-cell ix-ch "R"))
+             (ix-cell (find-cell ix-ch "U"))
+             (ix-back ix-ch 3)]
+         pbase (proll-row N ix-ch)
+         fq (frequencies ix)]
+     (letfn [(pch [dst] (/ (or (fq dst) 0) 16))]
+       (reduce-kv (fn [z k v]
+                    (conj z (+ (* v 6/16) (pch k))))
+                  []
+                  pbase)))))
 
-(reduce + (p-CH 6 1))
+(t/deftest p-CH-test
+  (t/is
+   (->> cells
+        (filter #(st/starts-with? (name %) "CH"))
+        (map-indexed (fn [ix _] (p-CH 6 (inc ix) "ch-no")))
+        (map (partial reduce +))
+        (every? (partial = 1)))))
+
+(defn p-G2J []
+  (->> cells
+       (map #(if (= % :JAIL) 1 0))))
+
+(defn pvec2d [N]
+  (->> cells
+       (map-indexed
+        (fn [ix cl]
+          (if (= cl :G2J)
+            (p-G2J)
+            (case (subs (name cl) 0 2)
+             "CC" (p-CC N ix)
+             "CH" (p-CH N ix)
+             (proll-row N ix)))))
+       (into [])))
+
+(t/deftest pvec2d-test
+  (t/is
+   (->>(pvec2d 6)
+       (map (partial reduce +))
+       (every? (partial = 1)))))
+
+(defn pvec-start []
+  (->> cells
+       (map #(vector (if (= :GO %) 1 0)))
+       (into [])))
+
+(let [m (m/matrix (pvec2d 6))
+      v (m/matrix (pvec-start))]
+  (loop [z m
+         c 2000]
+    (if (= c 0)
+      (->> (first z)
+           (map-indexed (fn [ix p] (vector (cells ix) p)) )
+           (sort-by second))
+        (recur (m/mmul m z) (dec c)))))
