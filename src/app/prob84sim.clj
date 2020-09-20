@@ -20,11 +20,11 @@
 
 (def count-cells (count cells))
 
-(def sides (into [] (range 1 7)))
+(def ^:dynamic *sides* (into [] (range 1 7)))
 
 (defn throw-dice []
-  [(rand-nth sides)
-   (rand-nth sides)])
+  [(rand-nth *sides*)
+   (rand-nth *sides*)])
 
 (defmacro cell-index [kwd]
   (let [ix (reduce concat (map-indexed (fn [ix kw] (list kw ix)) cells))]
@@ -205,6 +205,10 @@
         (recur (record-double game (+ r0 r1)))
         (recur (make-move (reset-double game) (:last game) (+ r0 r1)))))))
 
-(let [z (play (init-game 1000000))]
-  (->> z
-       (sort-by second)))
+(defn solve-for-4 []
+  (binding [*sides* (range 1 5)]
+   (let [z (play (init-game 10000000))]
+     (->> z
+          (sort-by second)
+          (take-last 3)
+          (map #(vector (ix-cell (first %)) %))))))
