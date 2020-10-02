@@ -39,7 +39,8 @@
 (defn t? [x]
   (numb/natural? (t-index x)))
 
-(let [rh (map H (drop (inc 143) (range)))]
-  (->> rh
-       (filter #(and (t? %) (p? %)))
-       (first)))
+(defn solve []
+  (let [rh (map H (drop (inc 143) (range)))]
+   (->> rh
+        (filter #(and (t? %) (p? %)))
+        (first))))
