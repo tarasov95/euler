@@ -101,6 +101,11 @@
 (t/deftest find-min-for-x-test
   (t/is (= {:g [2 1154] :c 1999305} (find-min-for-x 2 1000))))
 
+;; consider a grid 1xN
+;; number of rectangles in such a grid is sum of i where i in (range 1 N)
+;; the sum is a triangular number https://en.wikipedia.org/wiki/1_%2B_2_%2B_3_%2B_4_%2B_%E2%8B%AF
+;; calculating index of a triangular number /see prob45/ close to 2e6 we get N=2000
+
 (defn solve []
   (loop [x 1
          y 2000
