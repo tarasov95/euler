@@ -27,8 +27,10 @@
 (defn bfs-pyth
   ([z acc pred?] (bfs-pyth [(m/array [3 4 5])] z acc pred?))
   ([s z acc pred?]
-   (if (empty? s)
-     z
+   (cond
+     (reduced? z) (deref z)
+     (empty? s) z
+     :else
      (let [p (first s)]
        (recur (conj-if pred? (m/mmul A p)
                        (conj-if pred? (m/mmul B p)
@@ -60,6 +62,7 @@
 (t/deftest solve-test
   (t/is (= 3 ((solve 120) 120))))
 
-(time (->> (solve N)
-           (filter #(= 1 (second %)))
-           (count)))
+(defn solve-prob []
+  (time (->> (solve N)
+             (filter #(= 1 (second %)))
+             (count))))
