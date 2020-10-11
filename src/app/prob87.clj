@@ -26,4 +26,5 @@
        (distinct)
        (count)))
 
-(solve)
+(t/deftest solve-test
+  (t/is (= 1097343 (solve))))
