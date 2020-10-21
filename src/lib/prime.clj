@@ -1,5 +1,6 @@
 (ns lib.prime
   (:require [lib.prime-data :as data]
+            [clojure.spec.alpha :as s]
             [lib.numb :as numb]))
 
 (defn prime? [rg n]
@@ -91,6 +92,17 @@
                 next-guess
                 (quot n (:ppow fac)))
          (recur z next-guess n))))))
+
+(s/def ::fac number?)
+(s/def ::pow number?)
+(s/def ::factor (s/keys :req-un [::fac ::pow]))
+(s/def ::factors (s/coll-of ::factor :kind vector?))
+(s/fdef prime-fact
+  :args (s/alt
+         :single-number (s/cat :n number?)
+         :full (s/cat :z ::factors :fact-guess number? :n number?))
+  :ret ::factors)
+
 
 ;; test
 ;; (->> (range 1 10000)
