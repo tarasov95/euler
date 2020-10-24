@@ -40,21 +40,6 @@
   :args (s/cat
          :factor :lib.prime/factor))
 
-;; (defn permut-factors [z m rg]
-;;   (let [[h & r] rg]
-;;     (if (empty? h)
-;;       nil
-;;       (->> (expand-factor m h)
-;;            (map (fn [ef]
-;;                   (conj (second ef)
-;;                         (permut-factors [] (first ef) (into [] r)))))))))
-
-;; (s/fdef permut-factors
-;;   :args (s/cat
-;;          :current-result (s/coll-of number? :kind vector)
-;;          :multiplier number?
-;;          :array-of-factors :lib.prime/factors))
-
 (defn nullif [val null]
   (if (= val null) nil
       val))
@@ -218,4 +203,61 @@
      :v3v1 (st/difference v3 v1)
      :v1v3 (st/difference v1 v3)}))
 
-(test-multiples 120)
+(defn permult-rg
+  ([rg] (permult-rg #{} 0 (into [] rg)))
+  ([z ix rg]
+   (if (>= ix (count rg))
+     z
+     (let [n (rg ix)
+           tail (subvec rg (inc ix))
+           but-ix (into (subvec rg 0 ix) tail)]
+       (recur
+        (into z
+              (map
+               #(->>
+                 (concat (subvec but-ix 0 %1)
+                         (subvec but-ix (inc %1)))
+                 (cons (* n %2))
+                 (sort)
+                 (into []))
+               (range ix (count but-ix))
+               tail))
+        (inc ix)
+        rg)))))
+
+(defn permult-facts2 [rg]
+  (loop [y (permult-rg rg)
+         z (into #{rg} y)]
+    (if (every? #(= 1 (count %)) y)
+      z
+      (let [yn (into #{} (mapcat permult-rg y))]
+        (recur yn
+               (into z yn))))))
+
+(defn permult2 [N]
+  (->> (prime/prime-fact N)
+       (mapcat inflate-fact)
+       (into [])
+       (permult-facts2)))
+
+(defn prod-sum-len-facts [n facts]
+  (let [s (reduce + facts)]
+    (+ (count facts) (- n s))))
+
+(defn prod-sum-len [N]
+  (->> (permult2 N)
+       (map (partial prod-sum-len-facts N))
+       (filter (partial < 1))))
+
+(defn solve2 [N]
+  (let [z (->> (drop 2 (range))
+               (map #(vector % (prod-sum-len %)))
+               (reduce (record-len N) {}))]
+    (->> z
+         (filter #(<= (first %) N))
+         (map second)
+         (distinct)
+         (reduce +))))
+
+(t/deftest solve2-test
+  (t/is (= 7587457 (solve2 12000))))
