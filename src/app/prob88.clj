@@ -3,6 +3,7 @@
             [lib.seq :as sq]
             [lib.prime :as prime]
             [clojure.spec.alpha :as s]
+            [clojure.set :as st]
             [clojure.spec.test.alpha :as stest]
             [lib.numb :as numb]))
 
@@ -29,8 +30,11 @@
                 (subvec (second e) 1)])
              [1 (into [] (repeat pow fac))]))]
     (->> z0
-         (mapcat #(vector %
+         (mapcat #(vector % ;;[original reversed]
                           [(reduce * (second %)) [(first %)]])))))
+
+(t/deftest expand-factor-test
+  (expand-factor {:fac 2 :pow 3}))
 
 (s/fdef expand-factor
   :args (s/cat
@@ -114,26 +118,104 @@
                                   (assoc z1 c n))) z))))))
 
 (defn solve [N]
-      z (->> (drop 2 (range))
-             (pmap #(vector % (list-prod-sum %)))
-             (map #(vector (first %) (map count (second %))))
-             (reduce (record-len N) (sorted-map)))]
-  (->> z
-       (filter #(<= (first %) N))
-       (map second)
-       (distinct)
-       (reduce +)))
-
-;; (map count (list-prod-sum 16))
-;; (list-prod-sum 16)
-;; (fact-set 16)
+  (let [z (->> (drop 2 (range))
+          (pmap #(vector % (list-prod-sum %)))
+          (map #(vector (first %) (map count (second %))))
+          (reduce (record-len N) (sorted-map)))]
+ (->> z
+      (filter #(<= (first %) N))
+      ;; (map second)
+      ;; (distinct)
+      ;; (reduce +)
+      )))
 
 
-;; 2 2 3 3
-;; 1, 2 2
-;; 2, 2
-;; 4, nil
+(defn inflate-fact [f]
+  (repeat (:pow f) (:fac f)))
 
-;; 1, 3 3
-;; 3, 3
-;; 9, nil
+(t/deftest inflate-fact-test
+  (t/is (= [2 2 2] (inflate-fact {:fac 2 :pow 3}))))
+
+(defn mask [dig m]
+  (letfn [(select [pred]
+            (->> dig
+                 (map-indexed #(* (if (pred (bit-test m %1)) 1 0) %2))
+                 (filter (partial not= 0))))]
+    (let [z0 (select identity)
+          z1 (select not)]
+      (->> [(conj z0 (reduce * z1))
+            (conj z1 (reduce * z0))
+            [(reduce * z0) (reduce * z1)]]
+           (map #(filter (partial not= 1) %))
+           (map #(into [] (sort %)))
+           (distinct))
+      )))
+
+(t/deftest mask-test
+  (mask [2 2 3] 5))
+
+(defn list-all-multiples [N]
+  (let [fact (prime/prime-fact N)
+        pw (->> fact
+                (map :pow)
+                (reduce +))
+        dig (reduce concat (map inflate-fact fact))]
+    (->> (range 0 (bit-shift-left 1 pw))
+         (mapcat #(mask dig %))
+         (map sort)
+         (distinct)
+         )))
+
+(defn comb2
+  ([rg] (comb2 [] 0 (into [] rg)))
+  ([z ix rg]
+   (if (>= ix (count rg))
+     (->> z
+          (map #(->> % sort (into []))))
+     (let [n (rg ix)
+           r (into (subvec rg 0 ix) (subvec rg (inc ix)))]
+       (recur
+        (into z
+              (map-indexed
+               #(conj (into (subvec r 0 %1) (subvec r (inc %1)))
+                      (* n %2)) r))
+        (inc ix)
+        rg)))))
+
+(defn comb3 [rg]
+  (let [z0 (distinct (comb2 rg))
+        z1 (distinct (mapcat #(comb2 (into [] %)) z0))
+        z2 (distinct (mapcat #(comb2 (into [] %)) z1))]
+    (->> (concat z0
+                 z1
+                 z2)
+         (sort)
+         (cons rg))))
+
+(defn permult-facts [rg]
+  (loop [y (distinct (comb2 rg))
+         z (into [rg] y)]
+    (if (every? #(= 1 (count %)) y)
+      z
+      (let [yn (distinct (mapcat #(comb2 %) y))]
+        (recur yn
+               (into z yn))))))
+
+(defn permult [N]
+  (->> (prime/prime-fact N)
+       (mapcat inflate-fact)
+       (into [])
+       (permult-facts)))
+
+(defn test-multiples [N]
+  (let [v1 (into #{} (fact-set N))
+        v2 (into #{} (list-all-multiples N))
+        v3 (into #{} (permult N))]
+    {:v1v2 (st/difference v1 v2)
+     :v2v1 (st/difference v2 v1)
+     :v2v3 (st/difference v2 v3)
+     :v3v2 (st/difference v3 v2)
+     :v3v1 (st/difference v3 v1)
+     :v1v3 (st/difference v1 v3)}))
+
+(test-multiples 120)
