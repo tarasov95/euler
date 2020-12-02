@@ -18,72 +18,9 @@
   (->> squares
        (map #(vector (quot % 10) (mod % 10)))))
 
-(defn explore []
-  (letfn [(dig [qd fun]
-            (->> qd
-                 (map fun)
-                 (distinct)))
-          (group [qd fun rev-fun]
-            (map #(vector (first %) (map  rev-fun (second %)))
-                 (group-by fun qd)))]
-    (let [qd edges]
-      (comment [qd
-                (dig qd first)
-                (dig qd second)])
-      (comment [(group qd first second)
-                (group qd second first)])
-      qd)))
-
 (defn r96 [rg]
   (->> rg
        (map #(map (fn [e] (if (= 9 e) 6 e)) %))))
-
-;; (defn color
-;;   ([edges f red] (color (sorted-set red) (sorted-set) (r96 edges) f))
-;;   ([red blue edges f]
-;;    (if (empty? edges)
-;;      [red blue]
-;;      (let [[v0 v1] (first edges)
-;;            r (rest edges)]
-;;        (cond
-;;          (and (blue v0) (red v0)) (if (or (red v1) (blue v1))
-;;                                     (recur red blue r f)
-;;                                     (if f
-;;                                       (recur (conj red v1) blue r f)
-;;                                       (recur red (conj blue v1) r f)))
-;;          (blue v0) (recur (conj red v1) blue r f)
-;;          (red v0) (recur red (conj blue v1) r f)
-;;          (and (blue v1) (red v1)) (if (or (red v0) (blue v0))
-;;                                     (recur red blue r f)
-;;                                     (if f
-;;                                       (recur (conj red v0) blue r f)
-;;                                       (recur red (conj blue v0) r f)))
-;;          (blue v1)  (recur (conj red v0) blue r f)
-;;          (red v1) (recur red (conj blue v0) r f)
-;;          :else (if f
-;;                  (recur (conj red v0) (conj blue v1) r f)
-;;                  (recur (conj red v1) (conj blue v0) r f)))))))
-
-;; (defn permut [edges]
-;;   (->> (r96 edges)
-;;        (mapcat identity)
-;;        (distinct)
-;;        (sort)
-;;        (mapcat #(vector
-;;                  (color edges false %)
-;;                  (color edges true %)))))
-
-;; (->> edges
-;;              (mapcat identity)
-;;              (distinct)
-;;              (sort)
-;;              (mapcat #(vector
-;;                        (color edges false %)
-;;                        (color edges true %)))
-;;              (map #(sort-by (partial reduce str) %))
-;;              (distinct)
-;;              (count)
-;;              )
 
 (def colors #{:r :b :g})
 (defn valid-coloring? [edges coloring]
@@ -138,34 +75,6 @@
 (t/deftest ccomb-test
   (t/is (= 2598960 (ccomb 52N 5))))
 
-(defn map-kn1 [rg]
-  (->> rg
-       (map (fn [s] {:k (- 6 (count s))
-                     :n (count (se/difference full-set s))
-                     :s s}))))
-
-(defn map-kn2 [rg]
-  (->> rg
-       (map (fn [s] (ccomb (:n s) (:k s))))))
-
-(defn solve0 []
-  (let [e96 (r96 edges)
-        vrt (vertices e96)]
-    (->> (gen-colorings vrt)
-         (map #(into {} %))
-         (filter (partial valid-coloring? e96))
-         (mapcat sets-from-coloring)
-         (distinct)
-        ;; (filter (partial valid-sets? e96))
-        ;; (count)
-        ;; (take 5)
-         (map map-kn1)
-        ;; (map map-kn2)
-        ;; (map #(reduce * %))
-        ;; (reduce +)
-         )))
-
-
 (defn comb [s k]
   (letfn [(comb-impl [s k]
             (if (>= 1 k)
@@ -212,18 +121,19 @@
        (when (not-empty s29) [s1 s29])
        (when (and (not-empty s19) (not-empty s29)) [s19 s29])))))
 
-(let [e96 (r96 edges)
-      vrt (vertices e96)]
-  (->> (gen-colorings vrt)
-       (map #(into {} %))
-       ;; (filter (partial valid-coloring? e96))
-       (mapcat sets-from-coloring)
-       (filter (partial valid-sets? e96))
-       ;; (count)
-       (mapcat gen-9sets)
-       (mapcat gen-padded-sets)
-       (distinct)
-       (count)
-       ))
+(defn solve []
+  (let [e96 (r96 edges)
+       vrt (vertices e96)]
+   (->> (gen-colorings vrt)
+        (map #(into {} %))
+        ;; (filter (partial valid-coloring? e96))
+        (mapcat sets-from-coloring)
+        (filter (partial valid-sets? e96))
+        (mapcat gen-9sets)
+        (mapcat gen-padded-sets)
+        (distinct)
+        (count)
+        )))
 
-
+(t/deftest solve-test
+  (t/is (= 1217 (solve))))
