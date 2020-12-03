@@ -23,10 +23,10 @@
        (map #(map (fn [e] (if (= 9 e) 6 e)) %))))
 
 (def colors #{:r :b :g})
-(defn valid-coloring? [edges coloring]
-  (->> edges
-       (every? (fn [e] (not= (or (coloring (first e)) -1)
-                             (or (coloring (second e)) -2))))))
+;; (defn valid-coloring? [edges coloring]
+;;   (->> edges
+;;        (every? (fn [e] (not= (or (coloring (first e)) -1)
+;;                              (or (coloring (second e)) -2))))))
 
 (defn vertices [edges]
   (->> (concat (map first edges)
@@ -42,19 +42,24 @@
        (mapcat (fn [pc]
                  (sq/conj-each
                   (gen-colorings (rest vertices))
-                  pc)))))))
+                  pc)))
+       (map (partial into {}))))))
 
 (defn sets-from-coloring [c]
-  (let [[c1 c2 c3] (->> c
-                        (group-by second)
-                        (map (fn [g] (map first (second g))))
-                        (map #(into #{} %)))]
-    (->> [[(into c1 c3) (into c2 c3)]
-          [(into c1 c2) (into c3 c2)]
-          [(into c2 c1) (into c3 c1)]]
-         ;; (map #(sort-by (fn [e] (str e)) %))
-         (filter #(and (< (count (first %)) 7)
-                       (< (count (second %)) 7))))))
+  (let [groups (->> c
+                    (group-by second)
+                    (map (fn [g] (map first (second g))))
+                    (map (partial into (sorted-set))))]
+    (when (= 3 (count groups))
+      (let [[c1 c2 c3] groups]
+        (with-meta
+          (->> [[(into c1 c3) (into c2 c3)]
+                [(into c1 c2) (into c3 c2)]
+                [(into c2 c1) (into c3 c1)]]
+              ;; (map #(sort-by (fn [e] (str e)) %))
+               (filter #(and (< (count (first %)) 7)
+                             (< (count (second %)) 7))))
+          c)))))
 
 (defn valid-sets? [edges s]
   (letfn [(ch [s d]
@@ -125,8 +130,6 @@
   (let [e96 (r96 edges)
        vrt (vertices e96)]
    (->> (gen-colorings vrt)
-        (map #(into {} %))
-        ;; (filter (partial valid-coloring? e96))
         (mapcat sets-from-coloring)
         (filter (partial valid-sets? e96))
         (mapcat gen-9sets)
